@@ -1,0 +1,8 @@
+{
+  "taskId": "smoke-task-20260305",
+  "slug": "smoke-task-20260305",
+  "targetUrl": "https://m.jd.com/",
+  "goal": "smoke tool test",
+  "createdAt": 1772676987032,
+  "updatedAt": 1772680665740
+}
