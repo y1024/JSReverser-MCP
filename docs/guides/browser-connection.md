@@ -88,7 +88,7 @@ curl http://127.0.0.1:9222/json/version
 2. 启动 MCP
 3. 调用 `list_pages`
 4. 看返回里是否出现你刚刚打开的页面
-5. 再调用 `list_network_requests` 或 `list_scripts`
+5. 再调用 `network_request(action="list")` 或 `list_scripts`
 
 如果能看到你当前页面的请求和脚本，说明接管成功。
 

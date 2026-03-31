@@ -4,41 +4,34 @@
 
 > 快速按逆向目标查工具，请先看：[`docs/reference/reverse-task-index.md`](./reverse-task-index.md)
 
-- **[Navigation automation](#navigation-automation)** (18 tools)
+- **[Navigation automation](#navigation-automation)** (13 tools)
   - [`check_browser_health`](#check_browser_health)
   - [`click_element`](#click_element)
-  - [`delete_session_state`](#delete_session_state)
-  - [`dump_session_state`](#dump_session_state)
   - [`find_clickable_elements`](#find_clickable_elements)
   - [`get_dom_structure`](#get_dom_structure)
   - [`get_performance_metrics`](#get_performance_metrics)
   - [`list_pages`](#list_pages)
-  - [`list_session_states`](#list_session_states)
-  - [`load_session_state`](#load_session_state)
   - [`navigate_page`](#navigate_page)
   - [`new_page`](#new_page)
   - [`query_dom`](#query_dom)
-  - [`restore_session_state`](#restore_session_state)
-  - [`save_session_state`](#save_session_state)
   - [`select_page`](#select_page)
+  - [`session_state`](#session_state)
   - [`type_text`](#type_text)
   - [`wait_for_element`](#wait_for_element)
-- **[Network](#network)** (6 tools)
+- **[Network](#network)** (5 tools)
   - [`analyze_websocket_messages`](#analyze_websocket_messages)
-  - [`get_network_request`](#get_network_request)
   - [`get_websocket_message`](#get_websocket_message)
   - [`get_websocket_messages`](#get_websocket_messages)
-  - [`list_network_requests`](#list_network_requests)
   - [`list_websocket_connections`](#list_websocket_connections)
-- **[Debugging](#debugging)** (5 tools)
+  - [`network_request`](#network_request)
+- **[Debugging](#debugging)** (4 tools)
+  - [`console_message`](#console_message)
   - [`evaluate_script`](#evaluate_script)
-  - [`get_console_message`](#get_console_message)
   - [`inject_preload_script`](#inject_preload_script)
-  - [`list_console_messages`](#list_console_messages)
   - [`take_screenshot`](#take_screenshot)
-- **[JS Reverse Engineering](#js-reverse-engineering)** (45 tools)
+- **[JS Reverse Engineering](#js-reverse-engineering)** (44 tools)
   - [`analyze_target`](#analyze_target)
-  - [`break_on_xhr`](#break_on_xhr)
+  - [`breakpoint`](#breakpoint)
   - [`collect_code`](#collect_code)
   - [`collection_diff`](#collection_diff)
   - [`create_hook`](#create_hook)
@@ -49,6 +42,8 @@
   - [`find_in_script`](#find_in_script)
   - [`get_hook_data`](#get_hook_data)
   - [`get_paused_info`](#get_paused_info)
+  - [`get_reference`](#get_reference)
+  - [`get_reference_route`](#get_reference_route)
   - [`get_request_initiator`](#get_request_initiator)
   - [`get_script_source`](#get_script_source)
   - [`get_storage`](#get_storage)
@@ -56,7 +51,6 @@
   - [`inject_hook`](#inject_hook)
   - [`inject_stealth`](#inject_stealth)
   - [`inspect_object`](#inspect_object)
-  - [`list_breakpoints`](#list_breakpoints)
   - [`list_hooks`](#list_hooks)
   - [`list_scripts`](#list_scripts)
   - [`list_stealth_features`](#list_stealth_features)
@@ -64,14 +58,11 @@
   - [`monitor_events`](#monitor_events)
   - [`pause`](#pause)
   - [`record_reverse_evidence`](#record_reverse_evidence)
-  - [`remove_breakpoint`](#remove_breakpoint)
   - [`remove_hook`](#remove_hook)
-  - [`remove_xhr_breakpoint`](#remove_xhr_breakpoint)
   - [`resume`](#resume)
   - [`risk_panel`](#risk_panel)
   - [`search_in_scripts`](#search_in_scripts)
   - [`search_in_sources`](#search_in_sources)
-  - [`set_breakpoint`](#set_breakpoint)
   - [`set_breakpoint_on_text`](#set_breakpoint_on_text)
   - [`set_user_agent`](#set_user_agent)
   - [`step_into`](#step_into)
@@ -82,6 +73,7 @@
   - [`trace_function`](#trace_function)
   - [`understand_code`](#understand_code)
   - [`unhook_function`](#unhook_function)
+  - [`xhr_breakpoint`](#xhr_breakpoint)
 
 ## Navigation automation
 
@@ -89,32 +81,18 @@
 
 **Description:** Check browser connectivity and active page readiness before running reverse workflows.
 
+**Parameters:**
+
+- `pageIdx`
+
 ### `click_element`
 
 **Description:** Click an element by selector.
 
 **Parameters:**
 
+- `pageIdx`
 - `selector`
-
-### `delete_session_state`
-
-**Description:** Delete one in-memory session snapshot by sessionId.
-
-**Parameters:**
-
-- `sessionId`
-
-### `dump_session_state`
-
-**Description:** Export a saved session snapshot as JSON, optionally writing to a file.
-
-**Parameters:**
-
-- `sessionId`
-- `path`
-- `pretty`
-- `encrypt`
 
 ### `find_clickable_elements`
 
@@ -122,6 +100,7 @@
 
 **Parameters:**
 
+- `pageIdx`
 - `filterText`
 
 ### `get_dom_structure`
@@ -130,6 +109,7 @@
 
 **Parameters:**
 
+- `pageIdx`
 - `maxDepth`
 - `includeText`
 
@@ -137,24 +117,13 @@
 
 **Description:** Get page performance metrics from Performance API.
 
+**Parameters:**
+
+- `pageIdx`
+
 ### `list_pages`
 
 **Description:** Get a list of pages open in the browser.
-
-### `list_session_states`
-
-**Description:** List all saved session snapshots in memory.
-
-### `load_session_state`
-
-**Description:** Load a session snapshot from JSON string or file into memory.
-
-**Parameters:**
-
-- `sessionId`
-- `path`
-- `snapshotJson`
-- `overwrite`
 
 ### `navigate_page`
 
@@ -162,6 +131,7 @@
 
 **Parameters:**
 
+- `pageIdx`
 - `type`
 - `url`
 - `ignoreCache`
@@ -182,30 +152,10 @@
 
 **Parameters:**
 
+- `pageIdx`
 - `selector`
 - `all`
 - `limit`
-
-### `restore_session_state`
-
-**Description:** Restore a previously saved session snapshot to current page.
-
-**Parameters:**
-
-- `sessionId`
-- `navigateToSavedUrl`
-- `clearStorageBeforeRestore`
-
-### `save_session_state`
-
-**Description:** Save current page session state (cookies/localStorage/sessionStorage) into in-memory snapshot.
-
-**Parameters:**
-
-- `sessionId`
-- `includeCookies`
-- `includeLocalStorage`
-- `includeSessionStorage`
 
 ### `select_page`
 
@@ -215,12 +165,33 @@
 
 - `pageIdx`
 
+### `session_state`
+
+**Description:** Manage in-memory session snapshots: save, restore, list, delete, dump, or load.
+
+**Parameters:**
+
+- `action`
+- `pageIdx`
+- `sessionId`
+- `includeCookies`
+- `includeLocalStorage`
+- `includeSessionStorage`
+- `navigateToSavedUrl`
+- `clearStorageBeforeRestore`
+- `path`
+- `pretty`
+- `encrypt`
+- `snapshotJson`
+- `overwrite`
+
 ### `type_text`
 
 **Description:** Type text into an input element.
 
 **Parameters:**
 
+- `pageIdx`
 - `selector`
 - `text`
 - `delay`
@@ -231,6 +202,7 @@
 
 **Parameters:**
 
+- `pageIdx`
 - `selector`
 - `timeout`
 
@@ -238,20 +210,13 @@
 
 ### `analyze_websocket_messages`
 
-**Description:** Analyzes WebSocket messages and groups them by pattern/fingerprint. Essential for understanding binary/protobuf message types in live streaming scenarios. Returns statistics and sample indices for each message type.
+**Description:** Group WebSocket messages by pattern/fingerprint and return stats plus sample indices for each type.
 
 **Parameters:**
 
 - `wsid`
 - `direction`
-
-### `get_network_request`
-
-**Description:** Gets a network request by an optional reqid, if omitted returns the currently selected request in the DevTools Network panel.
-
-**Parameters:**
-
-- `reqid`
+- `targetPageIdx`
 
 ### `get_websocket_message`
 
@@ -261,6 +226,7 @@
 
 - `wsid`
 - `frameIndex`
+- `targetPageIdx`
 
 ### `get_websocket_messages`
 
@@ -273,18 +239,8 @@
 - `groupId`
 - `pageSize`
 - `pageIdx`
+- `targetPageIdx`
 - `show_content`
-
-### `list_network_requests`
-
-**Description:** List all requests for the currently selected page since the last navigation.
-
-**Parameters:**
-
-- `pageSize`
-- `pageIdx`
-- `resourceTypes`
-- `includePreservedRequests`
 
 ### `list_websocket_connections`
 
@@ -294,10 +250,39 @@
 
 - `pageSize`
 - `pageIdx`
+- `targetPageIdx`
 - `urlFilter`
 - `includePreservedConnections`
 
+### `network_request`
+
+**Description:** List network requests, or get one request by reqid.
+
+**Parameters:**
+
+- `action`
+- `reqid`
+- `pageSize`
+- `pageIdx`
+- `targetPageIdx`
+- `resourceTypes`
+- `includePreservedRequests`
+
 ## Debugging
+
+### `console_message`
+
+**Description:** List console messages, or get one message by msgid.
+
+**Parameters:**
+
+- `action`
+- `msgid`
+- `targetPageIdx`
+- `pageSize`
+- `pageIdx`
+- `types`
+- `includePreservedMessages`
 
 ### `evaluate_script`
 
@@ -306,15 +291,8 @@ so returned values have to JSON-serializable.
 
 **Parameters:**
 
+- `pageIdx`
 - `function`
-
-### `get_console_message`
-
-**Description:** Gets a console message by its ID. You can get all messages by calling list_console_messages.
-
-**Parameters:**
-
-- `msgid`
 
 ### `inject_preload_script`
 
@@ -324,23 +302,13 @@ so returned values have to JSON-serializable.
 
 - `script`
 
-### `list_console_messages`
-
-**Description:** List all console messages for the currently selected page since the last navigation.
-
-**Parameters:**
-
-- `pageSize`
-- `pageIdx`
-- `types`
-- `includePreservedMessages`
-
 ### `take_screenshot`
 
 **Description:** Take a screenshot of the page or element.
 
 **Parameters:**
 
+- `pageIdx`
 - `format`
 - `quality`
 - `fullPage`
@@ -367,13 +335,20 @@ so returned values have to JSON-serializable.
 - `autoReplayActions`
 - `collect`
 
-### `break_on_xhr`
+### `breakpoint`
 
-**Description:** Sets a breakpoint that triggers when an XHR/Fetch request URL contains the specified string.
+**Description:** Manage JavaScript breakpoints: set, remove, or list active breakpoints.
 
 **Parameters:**
 
+- `action`
+- `pageIdx`
 - `url`
+- `lineNumber`
+- `columnNumber`
+- `condition`
+- `isRegex`
+- `breakpointId`
 
 ### `collect_code`
 
@@ -457,6 +432,7 @@ so returned values have to JSON-serializable.
 
 **Parameters:**
 
+- `pageIdx`
 - `scriptId`
 - `query`
 - `contextChars`
@@ -479,8 +455,30 @@ so returned values have to JSON-serializable.
 
 **Parameters:**
 
+- `pageIdx`
 - `includeScopes`
 - `maxScopeDepth`
+
+### `get_reference`
+
+**Description:** Read one packaged reference doc, or return its compact summary.
+
+**Parameters:**
+
+- `mode`
+- `docId`
+- `maxSections`
+
+### `get_reference_route`
+
+**Description:** Route by stage, topic, or natural-language query to the most relevant reference docs.
+
+**Parameters:**
+
+- `mode`
+- `stage`
+- `topic`
+- `query`
 
 ### `get_request_initiator`
 
@@ -489,6 +487,7 @@ so returned values have to JSON-serializable.
 **Parameters:**
 
 - `requestId`
+- `pageIdx`
 - `taskId`
 - `taskSlug`
 - `targetUrl`
@@ -500,6 +499,7 @@ so returned values have to JSON-serializable.
 
 **Parameters:**
 
+- `pageIdx`
 - `scriptId`
 - `startLine`
 - `endLine`
@@ -512,15 +512,17 @@ so returned values have to JSON-serializable.
 
 **Parameters:**
 
+- `pageIdx`
 - `type`
 - `filter`
 
 ### `hook_function`
 
-**Description:** RECOMMENDED for reverse engineering: Hooks a JavaScript function to log its calls, arguments, and return values without pausing execution. More reliable than breakpoints for automated workflows. Use this as the default approach for monitoring functions.
+**Description:** Recommended default for reverse engineering: hook a function and log calls/args/results without pausing execution.
 
 **Parameters:**
 
+- `pageIdx`
 - `target`
 - `logArgs`
 - `logResult`
@@ -554,10 +556,6 @@ so returned values have to JSON-serializable.
 - `showMethods`
 - `showPrototype`
 
-### `list_breakpoints`
-
-**Description:** Lists all active breakpoints in the current debugging session.
-
 ### `list_hooks`
 
 **Description:** Lists all active function hooks.
@@ -568,6 +566,7 @@ so returned values have to JSON-serializable.
 
 **Parameters:**
 
+- `pageIdx`
 - `filter`
 
 ### `list_stealth_features`
@@ -596,6 +595,10 @@ so returned values have to JSON-serializable.
 
 **Description:** Pauses JavaScript execution at the current point. Use this to interrupt running code.
 
+**Parameters:**
+
+- `pageIdx`
+
 ### `record_reverse_evidence`
 
 **Description:** Append structured reverse-engineering evidence to a task artifact log.
@@ -613,14 +616,6 @@ so returned values have to JSON-serializable.
 - `targetActionDescription`
 - `entry`
 
-### `remove_breakpoint`
-
-**Description:** Removes a breakpoint by its ID. Use list_breakpoints to see active breakpoints.
-
-**Parameters:**
-
-- `breakpointId`
-
 ### `remove_hook`
 
 **Description:** Remove a hook by id.
@@ -629,17 +624,13 @@ so returned values have to JSON-serializable.
 
 - `hookId`
 
-### `remove_xhr_breakpoint`
-
-**Description:** Removes an XHR/Fetch breakpoint.
-
-**Parameters:**
-
-- `url`
-
 ### `resume`
 
 **Description:** Resumes JavaScript execution after being paused at a breakpoint. Execution continues until the next breakpoint or completion.
+
+**Parameters:**
+
+- `pageIdx`
 
 ### `risk_panel`
 
@@ -669,6 +660,7 @@ so returned values have to JSON-serializable.
 
 **Parameters:**
 
+- `pageIdx`
 - `query`
 - `caseSensitive`
 - `isRegex`
@@ -677,24 +669,13 @@ so returned values have to JSON-serializable.
 - `excludeMinified`
 - `urlFilter`
 
-### `set_breakpoint`
-
-**Description:** Sets a breakpoint in a JavaScript file at the specified line. The breakpoint will trigger when the code executes. NOTE: Prefer hook_function or create_hook for monitoring function calls — breakpoints require pause/resume coordination and are error-prone in automated workflows. Use breakpoints only when you need to inspect local variables inside a function.
-
-**Parameters:**
-
-- `url`
-- `lineNumber`
-- `columnNumber`
-- `condition`
-- `isRegex`
-
 ### `set_breakpoint_on_text`
 
 **Description:** Sets a breakpoint on specific code (function name, statement, etc.) by searching for it and automatically determining the exact position. Works with both normal and minified files. NOTE: Prefer hook_function for monitoring function calls — it captures args/results without pausing execution. Use this only when you need to inspect local variables at a specific code location.
 
 **Parameters:**
 
+- `pageIdx`
 - `text`
 - `urlFilter`
 - `occurrence`
@@ -712,13 +693,25 @@ so returned values have to JSON-serializable.
 
 **Description:** Steps into the next function call. Use this to enter and debug function bodies.
 
+**Parameters:**
+
+- `pageIdx`
+
 ### `step_out`
 
 **Description:** Steps out of the current function, continuing until the function returns. Use this to quickly exit a function.
 
+**Parameters:**
+
+- `pageIdx`
+
 ### `step_over`
 
 **Description:** Steps over to the next statement, treating function calls as a single step. Use this to move through code without entering function bodies.
+
+**Parameters:**
+
+- `pageIdx`
 
 ### `stop_monitor`
 
@@ -745,6 +738,7 @@ so returned values have to JSON-serializable.
 
 **Parameters:**
 
+- `pageIdx`
 - `functionName`
 - `urlFilter`
 - `logArgs`
@@ -772,3 +766,14 @@ so returned values have to JSON-serializable.
 **Parameters:**
 
 - `hookId`
+
+### `xhr_breakpoint`
+
+**Description:** Set or remove an XHR/Fetch breakpoint by URL substring match.
+
+**Parameters:**
+
+- `action`
+- `pageIdx`
+- `url`
+

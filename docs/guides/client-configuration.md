@@ -15,7 +15,7 @@
 ```json
 {
   "mcpServers": {
-    "js-reverse": {
+    "jsreverser-mcp": {
       "command": "node",
       "args": [
         "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js",
@@ -52,7 +52,7 @@
 ```json
 {
   "mcpServers": {
-    "js-reverse": {
+    "jsreverser-mcp": {
       "command": "node",
       "args": [
         "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js"
@@ -67,7 +67,7 @@
 ```json
 {
   "mcpServers": {
-    "js-reverse": {
+    "jsreverser-mcp": {
       "command": "node",
       "args": [
         "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js",
@@ -84,7 +84,7 @@
 ```json
 {
   "mcpServers": {
-    "js-reverse": {
+    "jsreverser-mcp": {
       "command": "node",
       "args": [
         "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js",
@@ -106,7 +106,7 @@
 ```json
 {
   "mcpServers": {
-    "js-reverse": {
+    "jsreverser-mcp": {
       "command": "node",
       "args": [
         "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js",
@@ -128,7 +128,7 @@
 ```json
 {
   "mcpServers": {
-    "js-reverse": {
+    "jsreverser-mcp": {
       "command": "node",
       "args": [
         "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js",
@@ -150,7 +150,7 @@
 ```json
 {
   "mcpServers": {
-    "js-reverse": {
+    "jsreverser-mcp": {
       "command": "node",
       "args": [
         "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js",
@@ -171,7 +171,7 @@
 ### 最简单配置
 
 ```bash
-claude mcp add js-reverse node /ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js
+claude mcp add jsreverser-mcp node /ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js
 ```
 
 ### 推荐配置思路
@@ -184,11 +184,11 @@ claude mcp add js-reverse node /ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js
 Claude API：
 
 ```toml
-[mcp_servers.js-reverse]
+[mcp_servers.jsreverser-mcp]
 command = "node"
 args = ["/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js"]
 
-[mcp_servers.js-reverse.env]
+[mcp_servers.jsreverser-mcp.env]
 DEFAULT_LLM_PROVIDER = "anthropic"
 ANTHROPIC_API_KEY = "your_key"
 ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
@@ -197,11 +197,11 @@ ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
 Gemini API：
 
 ```toml
-[mcp_servers.js-reverse]
+[mcp_servers.jsreverser-mcp]
 command = "node"
 args = ["/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js"]
 
-[mcp_servers.js-reverse.env]
+[mcp_servers.jsreverser-mcp.env]
 DEFAULT_LLM_PROVIDER = "gemini"
 GEMINI_API_KEY = "your_key"
 GEMINI_MODEL = "gemini-2.0-flash-exp"
@@ -210,11 +210,11 @@ GEMINI_MODEL = "gemini-2.0-flash-exp"
 OpenAI API：
 
 ```toml
-[mcp_servers.js-reverse]
+[mcp_servers.jsreverser-mcp]
 command = "node"
 args = ["/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js"]
 
-[mcp_servers.js-reverse.env]
+[mcp_servers.jsreverser-mcp.env]
 DEFAULT_LLM_PROVIDER = "openai"
 OPENAI_API_KEY = "your_key"
 OPENAI_MODEL = "gpt-4o"
@@ -223,13 +223,13 @@ OPENAI_MODEL = "gpt-4o"
 ### 接管已打开的 Chrome
 
 ```bash
-claude mcp add js-reverse node /ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js -- --browserUrl http://127.0.0.1:9222
+claude mcp add jsreverser-mcp node /ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js -- --browserUrl http://127.0.0.1:9222
 ```
 
 如果你本地已经固定开着远程调试端口，也可以改用：
 
 ```bash
-claude mcp add js-reverse node /ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js -- --autoConnect
+claude mcp add jsreverser-mcp node /ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js -- --autoConnect
 ```
 
 ## Cursor
@@ -248,7 +248,7 @@ claude mcp add js-reverse node /ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js 
 ```json
 {
   "mcpServers": {
-    "js-reverse": {
+    "jsreverser-mcp": {
       "command": "node",
       "args": [
         "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js",
@@ -332,7 +332,7 @@ Codex 使用 `config.toml`。
 ### 最简单配置
 
 ```toml
-[mcp_servers.js-reverse]
+[mcp_servers.jsreverser-mcp]
 command = "node"
 args = ["/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js"]
 ```
@@ -340,7 +340,7 @@ args = ["/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js"]
 ### 接管已打开的 Chrome
 
 ```toml
-[mcp_servers.js-reverse]
+[mcp_servers.jsreverser-mcp]
 command = "node"
 args = [
   "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js",
@@ -352,7 +352,7 @@ args = [
 ### 自动接管本机浏览器
 
 ```toml
-[mcp_servers.js-reverse]
+[mcp_servers.jsreverser-mcp]
 command = "node"
 args = [
   "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js",
@@ -365,11 +365,11 @@ args = [
 Gemini API：
 
 ```toml
-[mcp_servers.js-reverse]
+[mcp_servers.jsreverser-mcp]
 command = "node"
 args = ["/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js"]
 
-[mcp_servers.js-reverse.env]
+[mcp_servers.jsreverser-mcp.env]
 DEFAULT_LLM_PROVIDER = "gemini"
 GEMINI_API_KEY = "your_key"
 GEMINI_MODEL = "gemini-2.0-flash-exp"
@@ -378,7 +378,7 @@ GEMINI_MODEL = "gemini-2.0-flash-exp"
 Claude API：
 
 ```toml
-[mcp_servers.js-reverse]
+[mcp_servers.jsreverser-mcp]
 command = "node"
 args = [
   "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js",
@@ -386,7 +386,7 @@ args = [
   "http://127.0.0.1:9222"
 ]
 
-[mcp_servers.js-reverse.env]
+[mcp_servers.jsreverser-mcp.env]
 DEFAULT_LLM_PROVIDER = "anthropic"
 ANTHROPIC_API_KEY = "your_key"
 ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
@@ -395,7 +395,7 @@ ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
 OpenAI API：
 
 ```toml
-[mcp_servers.js-reverse]
+[mcp_servers.jsreverser-mcp]
 command = "node"
 args = [
   "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js",
@@ -403,7 +403,7 @@ args = [
   "http://127.0.0.1:9222"
 ]
 
-[mcp_servers.js-reverse.env]
+[mcp_servers.jsreverser-mcp.env]
 DEFAULT_LLM_PROVIDER = "openai"
 OPENAI_API_KEY = "your_key"
 OPENAI_MODEL = "gpt-4o"
@@ -412,7 +412,7 @@ OPENAI_MODEL = "gpt-4o"
 Gemini CLI：
 
 ```toml
-[mcp_servers.js-reverse]
+[mcp_servers.jsreverser-mcp]
 command = "node"
 args = [
   "/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js",
@@ -420,7 +420,7 @@ args = [
   "http://127.0.0.1:9222"
 ]
 
-[mcp_servers.js-reverse.env]
+[mcp_servers.jsreverser-mcp.env]
 DEFAULT_LLM_PROVIDER = "gemini"
 GEMINI_CLI_PATH = "gemini-cli"
 ```
@@ -438,7 +438,7 @@ GEMINI_CLI_PATH = "gemini-cli"
 1. 打开一个已知页面
 2. 调用 `list_pages`
 3. 调用 `list_scripts`
-4. 调用 `list_network_requests`
+4. 调用 `network_request`，传 `action="list"`
 
 如果三者都能返回你当前页面对应的信息，说明配置已经基本正确。
 

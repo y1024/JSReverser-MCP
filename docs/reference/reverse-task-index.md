@@ -63,10 +63,10 @@
 - `create_hook`
 - `inject_hook`
 - `get_hook_data`
-- `break_on_xhr`
+- `xhr_breakpoint`
 - `get_request_initiator`
 
-推荐先 Hook `fetch/xhr/websocket`，触发业务动作后再抓记录。
+推荐先 Hook `fetch/xhr/websocket`，必要时再用 `xhr_breakpoint(action="set")` 卡住目标请求前的现场。
 
 同步记录：
 
@@ -131,11 +131,7 @@
 
 ## 9) 登录态复用（需登录站点建议）
 
-- `save_session_state`
-- `restore_session_state`
-- `list_session_states`
-- `dump_session_state`
-- `load_session_state`
+- `session_state`
 - `check_browser_health`
 
 适合“必须登录后才能访问”的目标站，减少重复扫码/验证码成本。

@@ -32,9 +32,8 @@
 | `collect_code` | `runtime.collector` + 页面脚本/网络 | `runtime.collector` 缓存 | Collector Cache / UnifiedCache |
 | `collection_diff` | `runtime.collector` + 页面脚本/网络 | `runtime.collector` 缓存 | Collector Cache / UnifiedCache |
 | `search_in_scripts` | `runtime.collector` + 页面脚本/网络 | `runtime.collector` 缓存 | Collector Cache / UnifiedCache |
-| `get_console_message` | Console 缓存 | Response attach only | CDP Console |
-| `list_console_messages` | Console 缓存 | Response attach only | CDP Console |
-| `break_on_xhr` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
+| `console_message` | Console 缓存 | Response attach only | CDP Console |
+| `xhr_breakpoint` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
 | `evaluate_on_callframe` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
 | `find_in_script` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
 | `get_paused_info` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
@@ -43,16 +42,13 @@
 | `get_storage` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
 | `hook_function` | 目标函数调用上下文 | `__mcp_hooks__` + `__hookStore[hookId]` | `__hookStore`（唯一数据面） |
 | `inspect_object` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
-| `list_breakpoints` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
+| `breakpoint` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
 | `list_hooks` | `__mcp_hooks__` | - | `__mcp_hooks__` |
 | `list_scripts` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
 | `monitor_events` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
 | `pause` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
-| `remove_breakpoint` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
-| `remove_xhr_breakpoint` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
 | `resume` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
 | `search_in_sources` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
-| `set_breakpoint` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
 | `set_breakpoint_on_text` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
 | `step_into` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
 | `step_out` | DebuggerContext + Page Runtime | 断点/XHR 规则/页面注入状态 | `__hookStore` / `__mcp_hooks__` / `__mcp_monitors__` |
@@ -69,17 +65,11 @@
 | `get_hook_data` | `__hookStore` -> `hookManager` | `hookManager` 同步数据 | `__hookStore` / HookManager |
 | `inject_hook` | `window.__hookStore` + `runtime.hookManager` | `runtime.hookManager`（同步后） | `__hookStore` / HookManager |
 | `remove_hook` | `window.__hookStore` + `runtime.hookManager` | `runtime.hookManager`（同步后） | `__hookStore` / HookManager |
-| `get_network_request` | Network 面板缓存 | Response attach only | CDP Network |
-| `list_network_requests` | Network 面板缓存 | Response attach only | CDP Network |
+| `network_request` | Network 面板缓存 | Response attach only | CDP Network |
 | `check_browser_health` | PageController + 浏览器会话状态 | SessionState 快照/恢复 | In-memory SessionState |
 | `click_element` | PageController + 浏览器会话状态 | SessionState 快照/恢复 | In-memory SessionState |
-| `delete_session_state` | SessionState 管理器 | SessionState 管理器 | In-memory SessionState |
-| `dump_session_state` | SessionState 管理器 | SessionState 管理器 | In-memory SessionState |
+| `session_state` | SessionState 管理器 | SessionState 管理器 | In-memory SessionState |
 | `get_performance_metrics` | PageController + 浏览器会话状态 | SessionState 快照/恢复 | In-memory SessionState |
-| `list_session_states` | SessionState 管理器 | SessionState 管理器 | In-memory SessionState |
-| `load_session_state` | SessionState 管理器 | SessionState 管理器 | In-memory SessionState |
-| `restore_session_state` | SessionState 管理器 | SessionState 管理器 | In-memory SessionState |
-| `save_session_state` | SessionState 管理器 | SessionState 管理器 | In-memory SessionState |
 | `type_text` | PageController + 浏览器会话状态 | SessionState 快照/恢复 | In-memory SessionState |
 | `wait_for_element` | PageController + 浏览器会话状态 | SessionState 快照/恢复 | In-memory SessionState |
 | `list_pages` | BrowserManager pages | 当前页选择/导航 | BrowserManager currentPage |
