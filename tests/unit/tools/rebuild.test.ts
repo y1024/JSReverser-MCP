@@ -37,7 +37,7 @@ function extractFirstJsonBlock(lines: string[]): Record<string, unknown> {
 
 describe('rebuild bridge tools', () => {
   it('exports a local rebuild bundle and prioritizes env patches from runtime errors', async () => {
-    const rootDir = await mkdtemp(path.join(tmpdir(), 'js-reverse-rebuild-'));
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'jsreverser-mcp-rebuild-'));
     const runtime = getJSHookRuntime();
     const originalStore = runtime.reverseTaskStore;
     runtime.reverseTaskStore = new ReverseTaskStore({rootDir});
@@ -93,7 +93,7 @@ describe('rebuild bridge tools', () => {
   });
 
   it('auto-generates a rebuild bundle from observed page evidence and task logs', async () => {
-    const rootDir = await mkdtemp(path.join(tmpdir(), 'js-reverse-rebuild-auto-'));
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'jsreverser-mcp-rebuild-auto-'));
     const runtime = getJSHookRuntime();
     const originalStore = runtime.reverseTaskStore;
     const originals = {
@@ -174,7 +174,7 @@ describe('rebuild bridge tools', () => {
   });
 
   it('filters auto-generated evidence by target keywords instead of logging unrelated page noise', async () => {
-    const rootDir = await mkdtemp(path.join(tmpdir(), 'js-reverse-rebuild-filtered-'));
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'jsreverser-mcp-rebuild-filtered-'));
     const runtime = getJSHookRuntime();
     const originalStore = runtime.reverseTaskStore;
     const originals = {
@@ -270,7 +270,7 @@ describe('rebuild bridge tools', () => {
   });
 
   it('matches weird targets through function names and action descriptions without relying on obvious parameter names', async () => {
-    const rootDir = await mkdtemp(path.join(tmpdir(), 'js-reverse-rebuild-function-target-'));
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'jsreverser-mcp-rebuild-function-target-'));
     const runtime = getJSHookRuntime();
     const originalStore = runtime.reverseTaskStore;
     const originals = {

@@ -39,7 +39,7 @@ function extractFirstJsonBlock(lines: string[]): Record<string, unknown> {
 
 describe('reverse task tools', () => {
   it('mirrors runtime evidence into network and scripts artifacts and removes template placeholders', async () => {
-    const rootDir = await mkdtemp(path.join(tmpdir(), 'js-reverse-task-mirror-'));
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'jsreverser-mcp-task-mirror-'));
     const runtime = getJSHookRuntime();
     const originalStore = runtime.reverseTaskStore;
 
@@ -115,11 +115,12 @@ describe('reverse task tools', () => {
   });
 
   it('records reverse evidence and emits rebuild-oriented guidance', async () => {
-    const rootDir = await mkdtemp(path.join(tmpdir(), 'js-reverse-task-tools-'));
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'jsreverser-mcp-task-tools-'));
     const runtime = getJSHookRuntime();
     const originals = {
       reverseTaskStore: runtime.reverseTaskStore,
       collectorCollect: runtime.collector.collect,
+      collectorGetActivePage: runtime.collector.getActivePage,
       collectorGetTopPriorityFiles: runtime.collector.getTopPriorityFiles,
       analyzerUnderstand: runtime.analyzer.understand,
       cryptoDetect: runtime.cryptoDetector.detect,
@@ -135,6 +136,9 @@ describe('reverse task tools', () => {
       totalSize: 32,
       collectTime: 1,
     });
+    runtime.collector.getActivePage = async () => {
+      throw new Error('unit test should not launch a real browser');
+    };
     runtime.collector.getTopPriorityFiles = () => ({
       files: [{
         url: 'top-sign.js',
@@ -254,6 +258,7 @@ describe('reverse task tools', () => {
     } finally {
       runtime.reverseTaskStore = originals.reverseTaskStore;
       runtime.collector.collect = originals.collectorCollect;
+      runtime.collector.getActivePage = originals.collectorGetActivePage;
       runtime.collector.getTopPriorityFiles = originals.collectorGetTopPriorityFiles;
       runtime.analyzer.understand = originals.analyzerUnderstand;
       runtime.cryptoDetector.detect = originals.cryptoDetect;
