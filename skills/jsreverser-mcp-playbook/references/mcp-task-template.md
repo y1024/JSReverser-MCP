@@ -1,4 +1,4 @@
-# JS Reverse MCP 专用任务模板
+# JSReverser-MCP 专用任务模板
 
 按固定阶段执行：
 

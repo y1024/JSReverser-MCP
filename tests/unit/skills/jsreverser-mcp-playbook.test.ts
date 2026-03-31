@@ -15,15 +15,15 @@ async function readRepoFile(relativePath: string): Promise<string> {
   return readFile(path.join(repoRoot, relativePath), 'utf8');
 }
 
-describe('mcp-js-reverse-playbook docs contract', () => {
+describe('jsreverser-mcp-playbook docs contract', () => {
   it('defines the staged workflow, principles, task artifacts, and local rebuild references', async () => {
-    const skill = await readRepoFile('skills/mcp-js-reverse-playbook/SKILL.md');
-    const automationEntry = await readRepoFile('skills/mcp-js-reverse-playbook/references/automation-entry.md');
-    const taskTemplate = await readRepoFile('skills/mcp-js-reverse-playbook/references/mcp-task-template.md');
-    const outputContract = await readRepoFile('skills/mcp-js-reverse-playbook/references/output-contract.md');
-    const fallbacks = await readRepoFile('skills/mcp-js-reverse-playbook/references/fallbacks.md');
-    const taskArtifacts = await readRepoFile('skills/mcp-js-reverse-playbook/references/task-artifacts.md');
-    const localRebuild = await readRepoFile('skills/mcp-js-reverse-playbook/references/local-rebuild.md');
+    const skill = await readRepoFile('skills/jsreverser-mcp-playbook/SKILL.md');
+    const automationEntry = await readRepoFile('skills/jsreverser-mcp-playbook/references/automation-entry.md');
+    const taskTemplate = await readRepoFile('skills/jsreverser-mcp-playbook/references/mcp-task-template.md');
+    const outputContract = await readRepoFile('skills/jsreverser-mcp-playbook/references/output-contract.md');
+    const fallbacks = await readRepoFile('skills/jsreverser-mcp-playbook/references/fallbacks.md');
+    const taskArtifacts = await readRepoFile('skills/jsreverser-mcp-playbook/references/task-artifacts.md');
+    const localRebuild = await readRepoFile('skills/jsreverser-mcp-playbook/references/local-rebuild.md');
 
     for (const phrase of [
       'Observe',
@@ -49,5 +49,11 @@ describe('mcp-js-reverse-playbook docs contract', () => {
     assert.ok(skill.includes('inject_preload_script'));
     assert.ok(automationEntry.includes('inject_preload_script'));
     assert.ok(automationEntry.includes('首屏初始化'));
+    assert.ok(skill.includes('AI 快速执行版'));
+    assert.ok(skill.includes('正式权威版'));
+    assert.ok(skill.includes('以 `docs/reference/*` 为准'));
+    assert.ok(skill.includes('docs/reference/reverse-bootstrap.md'));
+    assert.ok(skill.includes('docs/reference/env-patching.md'));
+    assert.ok(skill.includes('docs/reference/pure-extraction.md'));
   });
 });
