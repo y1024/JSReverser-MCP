@@ -29,5 +29,9 @@ describe('parameter workflow packaging', () => {
     await access(path.join(repoRoot, 'build/docs/knowledge/parameter-blueprints/jd-h5st/workflow.md'));
     await access(path.join(repoRoot, 'build/docs/knowledge/parameter-blueprints/jd-h5st/parts.json'));
     await access(path.join(repoRoot, 'build/docs/knowledge/parameter-blueprints/jd-h5st/mutations.json'));
+    await access(path.join(repoRoot, 'build/docs/knowledge/parameter-blueprints/douyin-a-bogus/parts.json'));
+    await access(path.join(repoRoot, 'build/docs/knowledge/parameter-blueprints/douyin-a-bogus/mutations.json'));
+    await access(path.join(repoRoot, 'build/docs/knowledge/parameter-blueprints/ks-hxfalcon/parts.json'));
+    await access(path.join(repoRoot, 'build/docs/knowledge/parameter-blueprints/ks-hxfalcon/mutations.json'));
   });
 });

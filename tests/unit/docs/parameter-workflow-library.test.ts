@@ -78,11 +78,39 @@ describe('parameter blueprint knowledge base docs', () => {
       parameter: string;
       mutations: Array<{id: string; applies_to_part: number}>;
     }>('docs/knowledge/parameter-blueprints/jd-h5st/mutations.json');
+    const douyinParts = await readJson<{
+      parameter: string;
+      parts: Array<{index: number; name: string}>;
+    }>('docs/knowledge/parameter-blueprints/douyin-a-bogus/parts.json');
+    const douyinMutations = await readJson<{
+      parameter: string;
+      mutations: Array<{id: string; applies_to_part: number}>;
+    }>('docs/knowledge/parameter-blueprints/douyin-a-bogus/mutations.json');
+    const falconParts = await readJson<{
+      parameter: string;
+      parts: Array<{index: number; name: string}>;
+    }>('docs/knowledge/parameter-blueprints/ks-hxfalcon/parts.json');
+    const falconMutations = await readJson<{
+      parameter: string;
+      mutations: Array<{id: string; applies_to_part: number}>;
+    }>('docs/knowledge/parameter-blueprints/ks-hxfalcon/mutations.json');
 
     assert.strictEqual(h5stParts.parameter, 'h5st');
     assert.strictEqual(h5stParts.parts.length, 10);
     assert.ok(h5stParts.parts.some((item) => item.name === 'body_digest'));
     assert.strictEqual(h5stMutations.parameter, 'h5st');
     assert.ok(h5stMutations.mutations.some((item) => item.id === 'field-ordering-normalization'));
+
+    assert.strictEqual(douyinParts.parameter, 'a_bogus');
+    assert.ok(douyinParts.parts.length >= 6);
+    assert.ok(douyinParts.parts.some((item) => item.name === 'send_time_patch_segment'));
+    assert.strictEqual(douyinMutations.parameter, 'a_bogus');
+    assert.ok(douyinMutations.mutations.some((item) => item.id === 'send-time-patch-variant'));
+
+    assert.strictEqual(falconParts.parameter, '__NS_hxfalcon');
+    assert.ok(falconParts.parts.length >= 6);
+    assert.ok(falconParts.parts.some((item) => item.name === 'vm_bridge_segment'));
+    assert.strictEqual(falconMutations.parameter, '__NS_hxfalcon');
+    assert.ok(falconMutations.mutations.some((item) => item.id === 'vm-bridge-callback-variant'));
   });
 });
