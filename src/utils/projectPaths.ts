@@ -4,6 +4,7 @@
  */
 
 import {existsSync} from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -28,8 +29,34 @@ export function resolvePackageRoot(moduleUrl: string): string {
   return packageRoot ?? process.cwd();
 }
 
+function resolveUserStateHome(): string {
+  const xdgStateHome = process.env.XDG_STATE_HOME;
+  if (xdgStateHome && xdgStateHome.trim().length > 0) {
+    return xdgStateHome;
+  }
+  return path.join(os.homedir(), '.local', 'state');
+}
+
+export function resolveArtifactsTasksDirForPackageRoot(packageRoot: string): string {
+  const explicitDir = process.env.JSREVERSER_ARTIFACTS_DIR;
+  if (explicitDir && explicitDir.trim().length > 0) {
+    return path.resolve(explicitDir);
+  }
+
+  if (existsSync(path.join(packageRoot, '.git'))) {
+    return path.join(packageRoot, 'artifacts', 'tasks');
+  }
+
+  return path.join(
+    resolveUserStateHome(),
+    'jsreverser-mcp',
+    'artifacts',
+    'tasks',
+  );
+}
+
 export function resolveDefaultArtifactsTasksDir(moduleUrl: string): string {
-  return path.join(resolvePackageRoot(moduleUrl), 'artifacts', 'tasks');
+  return resolveArtifactsTasksDirForPackageRoot(resolvePackageRoot(moduleUrl));
 }
 
 export function resolveDefaultDebuggerSessionsDir(moduleUrl: string): string {

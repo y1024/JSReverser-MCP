@@ -9,6 +9,7 @@ import path from 'node:path';
 import {describe, it} from 'node:test';
 
 import {
+  resolveArtifactsTasksDirForPackageRoot,
   resolveDefaultCodeCacheDir,
   resolveDefaultDebuggerSessionsDir,
   resolveDefaultEnvPath,
@@ -35,6 +36,48 @@ describe('project path resolution', () => {
       assert.ok(!envPath.startsWith(fakeCwd));
     } finally {
       process.cwd = originalCwd;
+    }
+  });
+
+  it('uses repo artifacts/tasks when package root is a source checkout', () => {
+    const repoRoot = process.cwd();
+    const resolved = resolveArtifactsTasksDirForPackageRoot(repoRoot);
+
+    assert.strictEqual(resolved, path.join(repoRoot, 'artifacts', 'tasks'));
+  });
+
+  it('uses user state directory when package root is a packaged install without .git', () => {
+    const originalXdgStateHome = process.env.XDG_STATE_HOME;
+    process.env.XDG_STATE_HOME = '/tmp/jsreverser-state-home';
+
+    try {
+      const resolved = resolveArtifactsTasksDirForPackageRoot('/tmp/fake-npx-install');
+      assert.strictEqual(
+        resolved,
+        path.join('/tmp/jsreverser-state-home', 'jsreverser-mcp', 'artifacts', 'tasks'),
+      );
+    } finally {
+      if (originalXdgStateHome === undefined) {
+        delete process.env.XDG_STATE_HOME;
+      } else {
+        process.env.XDG_STATE_HOME = originalXdgStateHome;
+      }
+    }
+  });
+
+  it('lets JSREVERSER_ARTIFACTS_DIR override the default artifacts root', () => {
+    const originalArtifactsDir = process.env.JSREVERSER_ARTIFACTS_DIR;
+    process.env.JSREVERSER_ARTIFACTS_DIR = '/tmp/custom-jsreverser-artifacts';
+
+    try {
+      const resolved = resolveArtifactsTasksDirForPackageRoot('/tmp/fake-npx-install');
+      assert.strictEqual(resolved, '/tmp/custom-jsreverser-artifacts');
+    } finally {
+      if (originalArtifactsDir === undefined) {
+        delete process.env.JSREVERSER_ARTIFACTS_DIR;
+      } else {
+        process.env.JSREVERSER_ARTIFACTS_DIR = originalArtifactsDir;
+      }
     }
   });
 });

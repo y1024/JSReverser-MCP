@@ -48,8 +48,19 @@ describe('ReverseTaskStore', () => {
     }
   });
 
+  it('supports explicit rootDir override for arbitrary working directories or custom storage locations', async () => {
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'jsreverser-custom-artifacts-'));
+
+    try {
+      const store = new ReverseTaskStore({rootDir});
+      assert.strictEqual(store.rootDir, rootDir);
+    } finally {
+      await rm(rootDir, {recursive: true, force: true});
+    }
+  });
+
   it('creates and reopens a reverse task with durable JSON and JSONL artifacts', async () => {
-    const rootDir = await mkdtemp(path.join(tmpdir(), 'js-reverse-task-store-'));
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'jsreverser-mcp-task-store-'));
 
     try {
       const store = new ReverseTaskStore({rootDir});

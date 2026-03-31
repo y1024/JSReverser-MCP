@@ -75,6 +75,16 @@ node build/src/index.js --show-parameter-workflow jd-h5st
 
 - `docs/guides/parameter-workflow-contribution.md`
 
+如果你使用的是 `npx -y jsreverser-mcp@latest`，任务证据默认不会写到当前目录，而是写到：
+
+- `~/.local/state/jsreverser-mcp/artifacts/tasks`
+
+如果要改位置，设置：
+
+```bash
+export JSREVERSER_ARTIFACTS_DIR=/your/path/artifacts/tasks
+```
+
 ## 7. 可选：配置外部 AI 分析能力
 
 如果你要使用 `understand_code`，或者希望 `deobfuscate_code` / `detect_crypto` 拿到更强的 AI 辅助结果，优先在 MCP server 配置里通过 `env` 传入环境变量。

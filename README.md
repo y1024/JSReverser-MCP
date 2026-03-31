@@ -298,6 +298,17 @@ args = ["/ABSOLUTE/PATH/JSReverser-MCP/build/src/index.js"]
 - 续跑提示模板：`reverse-update-prompt-template`
 - 结果报告模板：`reverse-report-template`
 
+## Artifacts 默认落点
+
+- **源码仓库运行**：默认写到 `<repo>/artifacts/tasks`
+- **`npx -y jsreverser-mcp@latest` 运行**：默认写到  
+  `~/.local/state/jsreverser-mcp/artifacts/tasks`
+- 如果你想自定义，设置：
+
+```bash
+export JSREVERSER_ARTIFACTS_DIR=/your/path/artifacts/tasks
+```
+
 ## 开发与测试
 
 ```bash

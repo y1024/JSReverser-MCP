@@ -201,6 +201,17 @@ Detailed task layout, execution flow, environment-patching boundaries, and safet
 - `reverse-update-prompt-template`
 - `reverse-report-template`
 
+## Default artifacts location
+
+- **Running from source checkout**: defaults to `<repo>/artifacts/tasks`
+- **Running via `npx -y jsreverser-mcp@latest`**: defaults to  
+  `~/.local/state/jsreverser-mcp/artifacts/tasks`
+- Override with:
+
+```bash
+export JSREVERSER_ARTIFACTS_DIR=/your/path/artifacts/tasks
+```
+
 ## 3-Minute Quick Start
 
 ### 1) Fastest launch path
