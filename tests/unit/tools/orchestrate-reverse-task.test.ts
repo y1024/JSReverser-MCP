@@ -75,12 +75,17 @@ describe('orchestrate_reverse_task tool', () => {
         currentStage: string;
         orchestration: {primaryStep: {tool: string}; suggestedSteps: Array<{tool: string}>};
         summary?: {taskId: string};
+        agentGuidance?: {recommendedTool?: string; recommendedParams?: Record<string, unknown>; resumeHint?: string; confidence?: number};
       };
       assert.strictEqual(payload.ok, true);
       assert.strictEqual(payload.currentStage, 'Rebuild');
       assert.strictEqual(payload.orchestration.primaryStep.tool, 'export_rebuild_bundle');
       assert.strictEqual(payload.orchestration.suggestedSteps[0]?.tool, 'manage_reverse_task');
       assert.strictEqual(payload.summary?.taskId, 'task-orchestrate-001');
+      assert.strictEqual(payload.agentGuidance?.recommendedTool, 'export_rebuild_bundle');
+      assert.deepStrictEqual(payload.agentGuidance?.recommendedParams, {taskId: 'task-orchestrate-001'});
+      assert.ok(String(payload.agentGuidance?.resumeHint).includes('--orchestrateReverseTask task-orchestrate-001'));
+      assert.ok((payload.agentGuidance?.confidence ?? 0) > 0.8);
     } finally {
       runtime.reverseTaskStore = originalStore;
       await rm(rootDir, {recursive: true, force: true});

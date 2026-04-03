@@ -173,6 +173,13 @@ describe('rebuild bridge tools', () => {
       assert.ok((payload.patchSuggestions as Array<Record<string, unknown>>).some((item) => item.capability === 'window'));
       assert.strictEqual((payload.firstDivergence as Record<string, unknown>).action, 'rebuild_local');
       assert.ok(String(payload.recommendedNextAction).includes('最小补环境'));
+      const guidance = payload.agentGuidance as Record<string, unknown>;
+      assert.strictEqual(guidance.recommendedTool, 'diff_env_requirements');
+      assert.deepStrictEqual(guidance.recommendedParams, {
+        runtimeError: 'ReferenceError: window is not defined',
+        observedCapabilities: ['window', 'document', 'crypto'],
+      });
+      assert.ok(String(guidance.resumeHint).includes('get_rebuild_health_report'));
       const evidenceAggregates = payload.evidenceAggregates as Record<string, unknown>;
       const topFunctions = evidenceAggregates.topFunctions as Array<Record<string, unknown>>;
       const links = evidenceAggregates.links as Record<string, unknown>;

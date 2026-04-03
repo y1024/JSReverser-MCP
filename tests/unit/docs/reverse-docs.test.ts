@@ -68,6 +68,7 @@ describe('reverse workflow docs', () => {
     assert.ok(readme.includes('--orchestrateReverseTask <taskId> --strategy env-fix'));
     assert.ok(readme.includes('skipSteps'));
     assert.ok(readme.includes('get_rebuild_health_report'));
+    assert.ok(readme.includes('agentGuidance'));
     assert.ok(readme.includes('patchSuggestions'));
     assert.ok(readme.includes('evidenceAggregates'));
     assert.ok(readme.includes('--executionOverrides'));
@@ -124,6 +125,7 @@ describe('reverse workflow docs', () => {
     assert.ok(toolReference.includes('otherTaskId'));
     assert.ok(toolReference.includes('pruneOlderThanDays'));
     assert.ok(toolReference.includes('strategy'));
+    assert.ok(toolReference.includes('agentGuidance'));
     assert.ok(orchestrationGuide.includes('codex --resume'));
     assert.ok(orchestrationGuide.includes('orchestration-checkpoint.json'));
     assert.ok(orchestrationGuide.includes('--stopOnError'));
@@ -134,6 +136,7 @@ describe('reverse workflow docs', () => {
     assert.ok(orchestrationGuide.includes('strategy'));
     assert.ok(orchestrationGuide.includes('env-fix'));
     assert.ok(orchestrationGuide.includes('get_rebuild_health_report'));
+    assert.ok(orchestrationGuide.includes('agentGuidance'));
     assert.ok(orchestrationGuide.includes('recommendedNextAction'));
     assert.ok(orchestrationGuide.includes('failureType | 常见含义 | 默认 retryable'));
     assert.ok(orchestrationGuide.includes('record_reverse_evidence'));

@@ -187,9 +187,10 @@ describe('manage_reverse_task tool', () => {
           includeArchived: true,
         },
       }, searchResponse as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]);
-      const searchPayload = JSON.parse(searchResponse.lines[1] ?? '{}') as {items: Array<{taskId: string}>};
+      const searchPayload = JSON.parse(searchResponse.lines[1] ?? '{}') as {items: Array<{taskId: string}>; agentGuidance?: {recommendedTool?: string}};
       assert.strictEqual(searchPayload.items.length, 1);
       assert.strictEqual(searchPayload.items[0]?.taskId, 'task-admin-001');
+      assert.strictEqual(searchPayload.agentGuidance?.recommendedTool, 'manage_reverse_task');
 
       const compareResponse = makeResponse();
       await manageReverseTaskTool.handler({
@@ -199,8 +200,9 @@ describe('manage_reverse_task tool', () => {
           otherTaskId: 'task-admin-002',
         },
       }, compareResponse as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]);
-      const comparePayload = JSON.parse(compareResponse.lines[1] ?? '{}') as {summary: {sharedTopFunctions: string[]}};
+      const comparePayload = JSON.parse(compareResponse.lines[1] ?? '{}') as {summary: {sharedTopFunctions: string[]}; agentGuidance?: {recommendedTool?: string}};
       assert.ok(comparePayload.summary.sharedTopFunctions.includes('signPayload'));
+      assert.strictEqual(comparePayload.agentGuidance?.recommendedTool, 'manage_reverse_task');
 
       const archiveResponse = makeResponse();
       await manageReverseTaskTool.handler({
@@ -249,5 +251,30 @@ describe('manage_reverse_task tool', () => {
       runtime.reverseTaskStore = originalStore;
       await rm(rootDir, {recursive: true, force: true});
     }
+  });
+
+  it('validates action-specific parameters for agent-facing task management', async () => {
+    const response = makeResponse();
+
+    await assert.rejects(() => manageReverseTaskTool.handler({
+      params: {
+        action: 'search',
+      },
+    }, response as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]), /query or tag is required/);
+
+    await assert.rejects(() => manageReverseTaskTool.handler({
+      params: {
+        action: 'tag',
+        taskId: 'task-x',
+        tags: [],
+      },
+    }, response as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]), /at least one tag is required/);
+
+    await assert.rejects(() => manageReverseTaskTool.handler({
+      params: {
+        action: 'update',
+        taskId: 'task-x',
+      },
+    }, response as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]), /at least one mutable field is required/);
   });
 });

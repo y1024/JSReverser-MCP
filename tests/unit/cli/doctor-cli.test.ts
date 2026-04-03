@@ -91,11 +91,17 @@ describe('doctor cli', () => {
       const progressLines: string[] = [];
       const progressHandled = await executeKnowledgeCliCommand({manageReverseTask: 'progress', taskId: 'task-cli-001'}, (line) => progressLines.push(line));
       assert.strictEqual(progressHandled, true);
-      const progressPayload = JSON.parse(progressLines[0]) as {action: string; currentStage: string; nextStepHint: string; reasoning: string[]};
+      const progressPayload = JSON.parse(progressLines[0]) as {action: string; currentStage: string; nextStepHint: string; reasoning: string[]; agentGuidance?: {recommendedTool?: string}};
       assert.strictEqual(progressPayload.action, 'progress');
       assert.strictEqual(progressPayload.currentStage, 'Rebuild');
       assert.strictEqual(progressPayload.nextStepHint, 'export_rebuild_bundle');
       assert.ok(Array.isArray(progressPayload.reasoning));
+      assert.strictEqual(progressPayload.agentGuidance?.recommendedTool, 'export_rebuild_bundle');
+
+      await assert.rejects(
+        () => executeKnowledgeCliCommand({manageReverseTask: 'search'}, () => undefined),
+        /query or tag is required/,
+      );
     } finally {
       if (originalArtifactsDir === undefined) {
         delete process.env.JSREVERSER_ARTIFACTS_DIR;

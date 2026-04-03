@@ -1,5 +1,7 @@
 import {listReverseTasks} from '../reverse/ReverseTaskList.js';
 import {archiveReverseTask, pruneReverseTasks, restoreReverseTask, searchReverseTasks, tagReverseTask} from '../reverse/ReverseTaskAdmin.js';
+import {buildManageTaskAgentHints} from '../reverse/ReverseTaskAgentProtocol.js';
+import {validateReverseTaskActionInput} from '../reverse/ReverseTaskActionValidation.js';
 import {autoProgressReverseTask} from '../reverse/ReverseTaskAutoProgress.js';
 import {compareReverseTasks} from '../reverse/ReverseTaskCompare.js';
 import {getReverseTaskState} from '../reverse/ReverseTaskQuery.js';
@@ -60,20 +62,52 @@ export const manageReverseTaskTool = defineTool({
       }
       return request.params.taskId;
     };
+    const requireTimelineField = (
+      value: string | undefined,
+      fieldName: 'stage' | 'timelineAction' | 'timelineStatus',
+    ): string => {
+      if (!value) {
+        throw new Error(`${fieldName} is required when action="timeline"`);
+      }
+      return value;
+    };
+    const writeJson = (payload: Record<string, unknown>) => {
+      response.appendResponseLine('```json');
+      response.appendResponseLine(JSON.stringify(payload, null, 2));
+      response.appendResponseLine('```');
+    };
+
+    validateReverseTaskActionInput({
+      action,
+      taskId: request.params.taskId,
+      otherTaskId: request.params.otherTaskId,
+      query: request.params.query,
+      tag: request.params.tag,
+      tags: request.params.tags,
+      stage: request.params.stage,
+      timelineAction: request.params.timelineAction,
+      timelineStatus: request.params.timelineStatus,
+      taskSlug: request.params.taskSlug,
+      targetUrl: request.params.targetUrl,
+      goal: request.params.goal,
+      currentStage: request.params.currentStage,
+      status: request.params.status,
+      currentSummary: request.params.currentSummary,
+      nextStepHint: request.params.nextStepHint,
+      successCriteria: request.params.successCriteria,
+    });
 
     if (action === 'list') {
       const items = await listReverseTasks(runtime.reverseTaskStore, {
         limit: request.params.limit,
         includeArchived: request.params.includeArchived,
       });
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({action, items}, null, 2));
-      response.appendResponseLine('```');
+      writeJson({
+        action,
+        items,
+        agentGuidance: buildManageTaskAgentHints({action, itemCount: items.length}),
+      });
       return;
-    }
-
-    if (!request.params.taskId && !['search', 'prune'].includes(action)) {
-      throw new Error(`taskId is required when action="${action}"`);
     }
 
     if (action === 'get') {
@@ -81,9 +115,15 @@ export const manageReverseTaskTool = defineTool({
         timelineLimit: request.params.timelineLimit,
         evidenceLimit: request.params.evidenceLimit,
       });
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({action, ...result}, null, 2));
-      response.appendResponseLine('```');
+      writeJson({
+        action,
+        ...result,
+        agentGuidance: buildManageTaskAgentHints({
+          action,
+          taskId: result.taskId,
+          nextStepHint: String((result.state?.nextStepHint ?? 'manage_reverse_task:progress')),
+        }),
+      });
       return;
     }
 
@@ -92,33 +132,46 @@ export const manageReverseTaskTool = defineTool({
         timelineLimit: request.params.timelineLimit,
         evidenceLimit: request.params.evidenceLimit,
       });
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({action, ...result}, null, 2));
-      response.appendResponseLine('```');
+      writeJson({
+        action,
+        ...result,
+        agentGuidance: buildManageTaskAgentHints({
+          action,
+          taskId: result.taskId,
+          nextStepHint: result.nextStepHint,
+          currentStage: result.currentStage,
+          status: result.status,
+        }),
+      });
       return;
     }
 
     if (action === 'progress') {
       const result = await autoProgressReverseTask(runtime.reverseTaskStore, requireTaskId());
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({ok: true, action, ...result}, null, 2));
-      response.appendResponseLine('```');
+      writeJson({
+        ok: true,
+        action,
+        ...result,
+        agentGuidance: buildManageTaskAgentHints({
+          action,
+          taskId: result.taskId,
+          nextStepHint: result.nextStepHint,
+          currentStage: result.currentStage,
+          status: result.status,
+        }),
+      });
       return;
     }
 
     if (action === 'archive') {
       const result = await archiveReverseTask(runtime.reverseTaskStore, requireTaskId());
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({ok: true, action, ...result}, null, 2));
-      response.appendResponseLine('```');
+      writeJson({ok: true, action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
       return;
     }
 
     if (action === 'restore') {
       const result = await restoreReverseTask(runtime.reverseTaskStore, requireTaskId());
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({ok: true, action, ...result}, null, 2));
-      response.appendResponseLine('```');
+      writeJson({ok: true, action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
       return;
     }
 
@@ -129,9 +182,12 @@ export const manageReverseTaskTool = defineTool({
         includeArchived: request.params.includeArchived,
         limit: request.params.limit,
       });
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({ok: true, action, items}, null, 2));
-      response.appendResponseLine('```');
+      writeJson({
+        ok: true,
+        action,
+        items,
+        agentGuidance: buildManageTaskAgentHints({action, itemCount: items.length}),
+      });
       return;
     }
 
@@ -142,9 +198,7 @@ export const manageReverseTaskTool = defineTool({
         request.params.tags ?? [],
         {replace: request.params.replaceTags},
       );
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({ok: true, action, ...result}, null, 2));
-      response.appendResponseLine('```');
+      writeJson({ok: true, action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
       return;
     }
 
@@ -152,20 +206,22 @@ export const manageReverseTaskTool = defineTool({
       const result = await pruneReverseTasks(runtime.reverseTaskStore, {
         olderThanDays: request.params.pruneOlderThanDays,
       });
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({ok: true, action, ...result}, null, 2));
-      response.appendResponseLine('```');
+      writeJson({ok: true, action, ...result, agentGuidance: buildManageTaskAgentHints({action})});
       return;
     }
 
     if (action === 'compare') {
-      if (!request.params.otherTaskId) {
-        throw new Error('otherTaskId is required when action="compare"');
-      }
-      const result = await compareReverseTasks(runtime.reverseTaskStore, requireTaskId(), request.params.otherTaskId);
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({ok: true, action, ...result}, null, 2));
-      response.appendResponseLine('```');
+      const result = await compareReverseTasks(runtime.reverseTaskStore, requireTaskId(), request.params.otherTaskId!);
+      writeJson({
+        ok: true,
+        action,
+        ...result,
+        agentGuidance: buildManageTaskAgentHints({
+          action,
+          taskId: result.leftTaskId,
+          otherTaskId: result.rightTaskId,
+        }),
+      });
       return;
     }
 
@@ -181,31 +237,24 @@ export const manageReverseTaskTool = defineTool({
         nextStepHint: request.params.nextStepHint,
         successCriteria: request.params.successCriteria,
       });
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({ok: true, action, ...result}, null, 2));
-      response.appendResponseLine('```');
+      writeJson({ok: true, action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
       return;
     }
 
     if (action === 'timeline') {
-      if (!request.params.stage || !request.params.timelineAction || !request.params.timelineStatus) {
-        throw new Error('stage, timelineAction, and timelineStatus are required when action="timeline"');
-      }
       const result = await appendReverseTimeline(runtime.reverseTaskStore, {
         taskId: requireTaskId(),
         taskSlug: request.params.taskSlug,
         targetUrl: request.params.targetUrl,
         goal: request.params.goal,
-        stage: request.params.stage,
-        action: request.params.timelineAction,
-        status: request.params.timelineStatus,
+        stage: requireTimelineField(request.params.stage, 'stage'),
+        action: requireTimelineField(request.params.timelineAction, 'timelineAction'),
+        status: requireTimelineField(request.params.timelineStatus, 'timelineStatus'),
         result: request.params.result,
         next: request.params.next,
         detail: request.params.detail,
       });
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({ok: true, action, ...result}, null, 2));
-      response.appendResponseLine('```');
+      writeJson({ok: true, action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
     }
   },
 });

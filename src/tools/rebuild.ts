@@ -9,6 +9,7 @@ import path from 'node:path';
 
 import {zod} from '../third_party/index.js';
 import type {CodeFile} from '../types/index.js';
+import {buildRebuildHealthAgentHints} from '../reverse/ReverseTaskAgentProtocol.js';
 
 import {ToolCategory} from './categories.js';
 import {getJSHookRuntime} from './runtime.js';
@@ -498,20 +499,25 @@ export const getRebuildHealthReport = defineTool({
     const analyzed = analyzeEnvRequirements(currentSummary, request.params.observedCapabilities);
     const firstDivergence = state.recentTimeline.find((entry) => String(entry.status ?? '') === 'error')
       ?? state.recentEvidence.find((entry) => String(entry.kind ?? '') === 'env-gap');
+    const agentHints = buildRebuildHealthAgentHints({
+      taskId: request.params.taskId,
+      runtimeError: currentSummary,
+      observedCapabilities: request.params.observedCapabilities,
+      hasPatchSuggestions: analyzed.patchSuggestions.length > 0,
+    });
 
     response.appendResponseLine('```json');
     response.appendResponseLine(JSON.stringify({
       taskId: request.params.taskId,
       currentStage,
-      status,
+      status: agentHints.status === 'ok' ? status : agentHints.status,
       currentSummary,
       evidenceAggregates: state.evidenceAggregates,
       firstDivergence: firstDivergence ?? null,
       missingCapabilities: analyzed.missingCapabilities.map((item) => item.capability),
       patchSuggestions: analyzed.patchSuggestions,
-      recommendedNextAction: analyzed.patchSuggestions.length > 0
-        ? '先应用最小补环境片段，再重新执行 rebuild / orchestration。'
-        : '当前未识别到明确 env gap，建议继续补证据或比对 runtime divergence。',
+      recommendedNextAction: agentHints.recommendedNextAction,
+      agentGuidance: agentHints,
     }, null, 2));
     response.appendResponseLine('```');
   },

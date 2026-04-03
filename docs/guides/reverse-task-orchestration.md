@@ -11,6 +11,7 @@
 - 先同步 task 状态，再生成下一批步骤
 - 直接串行执行 `manage_reverse_task`、`export_rebuild_bundle`、`diff_env_requirements` 等标准步骤
 - 失败后从 checkpoint 续跑，而不是重新手工拼步骤
+- 直接消费返回里的 `agentGuidance`，让大模型少自己推断下一步
 
 只想查状态时，优先继续用 `manage_reverse_task`。
 

@@ -1,4 +1,5 @@
 import {orchestrateReverseTask} from '../reverse/ReverseTaskOrchestrator.js';
+import {buildOrchestrationAgentHints} from '../reverse/ReverseTaskAgentProtocol.js';
 import {zod} from '../third_party/index.js';
 
 import {ToolCategory} from './categories.js';
@@ -41,7 +42,16 @@ export const orchestrateReverseTaskTool = defineTool({
       executionOverrides: request.params.executionOverrides,
     });
     response.appendResponseLine('```json');
-    response.appendResponseLine(JSON.stringify({ok: true, ...result}, null, 2));
+    response.appendResponseLine(JSON.stringify({
+      ok: true,
+      ...result,
+      agentGuidance: buildOrchestrationAgentHints({
+        taskId: result.taskId,
+        primaryStep: result.orchestration.primaryStep,
+        execution: result.execution,
+        confidence: result.advice.confidence,
+      }),
+    }, null, 2));
     response.appendResponseLine('```');
   },
 });

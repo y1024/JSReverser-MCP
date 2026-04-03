@@ -409,6 +409,7 @@ export async function executeKnowledgeCliCommand(
 
   if (args.orchestrateReverseTask) {
     const {ReverseTaskStore} = await import('./reverse/ReverseTaskStore.js');
+    const {buildOrchestrationAgentHints} = await import('./reverse/ReverseTaskAgentProtocol.js');
     const {orchestrateReverseTask} = await import('./reverse/ReverseTaskOrchestrator.js');
     const store = new ReverseTaskStore();
     const result = await orchestrateReverseTask(store, String(args.orchestrateReverseTask), {
@@ -423,11 +424,21 @@ export async function executeKnowledgeCliCommand(
       persistState: args.persistState,
       executionOverrides: args.executionOverrides as Record<string, {status: 'ok' | 'error'; result?: string; error?: string}> | undefined,
     });
-    writeLine(JSON.stringify(result, null, 2));
+    writeLine(JSON.stringify({
+      ...result,
+      agentGuidance: buildOrchestrationAgentHints({
+        taskId: result.taskId,
+        primaryStep: result.orchestration.primaryStep,
+        execution: result.execution,
+        confidence: result.advice.confidence,
+      }),
+    }, null, 2));
     return true;
   }
 
   if (args.manageReverseTask) {
+    const {buildManageTaskAgentHints} = await import('./reverse/ReverseTaskAgentProtocol.js');
+    const {validateReverseTaskActionInput} = await import('./reverse/ReverseTaskActionValidation.js');
     const {ReverseTaskStore} = await import('./reverse/ReverseTaskStore.js');
     const {listReverseTasks} = await import('./reverse/ReverseTaskList.js');
     const {getReverseTaskState} = await import('./reverse/ReverseTaskQuery.js');
@@ -440,18 +451,32 @@ export async function executeKnowledgeCliCommand(
     const timelineLimit = Number(args.reverseTimelineLimit ?? 10);
     const evidenceLimit = Number(args.reverseEvidenceLimit ?? 10);
     const action = String(args.manageReverseTask);
+    validateReverseTaskActionInput({
+      action,
+      taskId: typeof args.taskId === 'string' ? args.taskId : undefined,
+      otherTaskId: typeof args.otherTaskId === 'string' ? args.otherTaskId : undefined,
+      query: typeof args.query === 'string' ? args.query : undefined,
+      tag: typeof args.tag === 'string' ? args.tag : undefined,
+      tags: Array.isArray(args.tags) ? args.tags.map(String) : undefined,
+      stage: typeof args.timelineStage === 'string' ? args.timelineStage : undefined,
+      timelineAction: typeof args.timelineAction === 'string' ? args.timelineAction : undefined,
+      timelineStatus: typeof args.timelineStatus === 'string' ? args.timelineStatus : undefined,
+      taskSlug: typeof args.taskSlug === 'string' ? args.taskSlug : undefined,
+      targetUrl: typeof args.taskTargetUrl === 'string' ? args.taskTargetUrl : undefined,
+      goal: typeof args.taskGoal === 'string' ? args.taskGoal : undefined,
+      currentStage: typeof args.taskStage === 'string' ? args.taskStage : undefined,
+      status: typeof args.taskStatus === 'string' ? args.taskStatus : undefined,
+      currentSummary: typeof args.taskSummary === 'string' ? args.taskSummary : undefined,
+      nextStepHint: typeof args.taskNextStep === 'string' ? args.taskNextStep : undefined,
+    });
 
     if (action === 'list') {
       const items = await listReverseTasks(store, {
         limit: typeof args.reverseTaskLimit === 'number' ? args.reverseTaskLimit : undefined,
         includeArchived: Boolean(args.includeArchived),
       });
-      writeLine(JSON.stringify({action, items}, null, 2));
+      writeLine(JSON.stringify({action, items, agentGuidance: buildManageTaskAgentHints({action, itemCount: items.length})}, null, 2));
       return true;
-    }
-
-    if (!args.taskId && !['search', 'prune'].includes(action)) {
-      throw new Error(`--taskId is required when --manageReverseTask=${action}`);
     }
 
     if (action === 'get') {
@@ -459,7 +484,15 @@ export async function executeKnowledgeCliCommand(
         timelineLimit,
         evidenceLimit,
       });
-      writeLine(JSON.stringify({action, ...result}, null, 2));
+      writeLine(JSON.stringify({
+        action,
+        ...result,
+        agentGuidance: buildManageTaskAgentHints({
+          action,
+          taskId: result.taskId,
+          nextStepHint: String((result.state?.nextStepHint ?? 'manage_reverse_task:progress')),
+        }),
+      }, null, 2));
       return true;
     }
 
@@ -468,27 +501,47 @@ export async function executeKnowledgeCliCommand(
         timelineLimit,
         evidenceLimit,
       });
-      writeLine(JSON.stringify({action, ...result}, null, 2));
+      writeLine(JSON.stringify({
+        action,
+        ...result,
+        agentGuidance: buildManageTaskAgentHints({
+          action,
+          taskId: result.taskId,
+          nextStepHint: result.nextStepHint,
+          currentStage: result.currentStage,
+          status: result.status,
+        }),
+      }, null, 2));
       return true;
     }
 
     if (action === 'progress') {
       const result = await autoProgressReverseTask(store, String(args.taskId));
-      writeLine(JSON.stringify({action, ...result}, null, 2));
+      writeLine(JSON.stringify({
+        action,
+        ...result,
+        agentGuidance: buildManageTaskAgentHints({
+          action,
+          taskId: result.taskId,
+          nextStepHint: result.nextStepHint,
+          currentStage: result.currentStage,
+          status: result.status,
+        }),
+      }, null, 2));
       return true;
     }
 
     if (action === 'archive') {
       const {archiveReverseTask} = await import('./reverse/ReverseTaskAdmin.js');
       const result = await archiveReverseTask(store, String(args.taskId));
-      writeLine(JSON.stringify({action, ...result}, null, 2));
+      writeLine(JSON.stringify({action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
       return true;
     }
 
     if (action === 'restore') {
       const {restoreReverseTask} = await import('./reverse/ReverseTaskAdmin.js');
       const result = await restoreReverseTask(store, String(args.taskId));
-      writeLine(JSON.stringify({action, ...result}, null, 2));
+      writeLine(JSON.stringify({action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
       return true;
     }
 
@@ -500,7 +553,7 @@ export async function executeKnowledgeCliCommand(
         includeArchived: Boolean(args.includeArchived),
         limit: typeof args.reverseTaskLimit === 'number' ? args.reverseTaskLimit : undefined,
       });
-      writeLine(JSON.stringify({action, items}, null, 2));
+      writeLine(JSON.stringify({action, items, agentGuidance: buildManageTaskAgentHints({action, itemCount: items.length})}, null, 2));
       return true;
     }
 
@@ -512,7 +565,7 @@ export async function executeKnowledgeCliCommand(
         Array.isArray(args.tags) ? args.tags.map(String) : [],
         {replace: Boolean(args.replaceTags)},
       );
-      writeLine(JSON.stringify({action, ...result}, null, 2));
+      writeLine(JSON.stringify({action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
       return true;
     }
 
@@ -521,17 +574,18 @@ export async function executeKnowledgeCliCommand(
       const result = await pruneReverseTasks(store, {
         olderThanDays: typeof args.pruneOlderThanDays === 'number' ? args.pruneOlderThanDays : undefined,
       });
-      writeLine(JSON.stringify({action, ...result}, null, 2));
+      writeLine(JSON.stringify({action, ...result, agentGuidance: buildManageTaskAgentHints({action})}, null, 2));
       return true;
     }
 
     if (action === 'compare') {
-      if (!args.otherTaskId) {
-        throw new Error('--otherTaskId is required when --manageReverseTask=compare');
-      }
       const {compareReverseTasks} = await import('./reverse/ReverseTaskCompare.js');
       const result = await compareReverseTasks(store, String(args.taskId), String(args.otherTaskId));
-      writeLine(JSON.stringify({action, ...result}, null, 2));
+      writeLine(JSON.stringify({
+        action,
+        ...result,
+        agentGuidance: buildManageTaskAgentHints({action, taskId: result.leftTaskId, otherTaskId: result.rightTaskId}),
+      }, null, 2));
       return true;
     }
 
@@ -546,14 +600,11 @@ export async function executeKnowledgeCliCommand(
         currentSummary: args.taskSummary,
         nextStepHint: args.taskNextStep,
       });
-      writeLine(JSON.stringify({action, ...result}, null, 2));
+      writeLine(JSON.stringify({action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
       return true;
     }
 
     if (action === 'timeline') {
-      if (!args.timelineStage || !args.timelineAction || !args.timelineStatus) {
-        throw new Error('--timelineStage, --timelineAction, and --timelineStatus are required when --manageReverseTask=timeline');
-      }
       const result = await appendReverseTimeline(store, {
         taskId: String(args.taskId),
         taskSlug: args.taskSlug,
@@ -565,7 +616,7 @@ export async function executeKnowledgeCliCommand(
         result: args.timelineResult,
         next: args.timelineNext,
       });
-      writeLine(JSON.stringify({action, ...result}, null, 2));
+      writeLine(JSON.stringify({action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
       return true;
     }
 
