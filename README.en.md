@@ -205,6 +205,7 @@ Bring browser evidence back to a local Node workflow.
 - They also expose shared continuation fields: `outcome`, `shouldResume`, `shouldSwitchStrategy`, `nextBestTool`, and `nextBestParams`.
 - They also expose a shared `continuation` object: `{ ready, reason, tool, params, strategy, resumeCommand }`.
 - They now also expose a shared failure contract: `errorCode`, `errorType`, `retryable`, `blockedBy`, plus `detailLevel` and `continuation.actionKey`.
+- `compact` mode is now slimmer: it keeps `responseSummary`, `diagnostics`, critical status fields, and `continuation`, while trimming redundant next-step blocks and switching `detailLevel` to `minimal`.
 - `record_reverse_evidence`: persist key hook / network / script observations into task artifacts so later summarize / progress / orchestration steps can reuse them. Summary/query responses now also expose deduped `evidenceAggregates` for top URLs, top functions, and env blockers.
 
 ### Page Automation

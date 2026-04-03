@@ -25,6 +25,27 @@ export interface UnifiedContinuationFields {
   continuation: ContinuationShape;
 }
 
+export function compactAgentPayload(
+  payload: Record<string, unknown>,
+  outputMode: OutputMode,
+): Record<string, unknown> {
+  if (outputMode !== 'compact') {
+    return payload;
+  }
+  const {
+    nextBestTool: _nextBestTool,
+    nextBestParams: _nextBestParams,
+    shouldSwitchStrategy: _shouldSwitchStrategy,
+    agentGuidance: _agentGuidance,
+    fallbackPlan: _fallbackPlan,
+    ...rest
+  } = payload;
+  return {
+    ...rest,
+    detailLevel: 'minimal',
+  };
+}
+
 export function inferBlockedBy(reason: unknown): string | undefined {
   if (reason === 'blocked' || reason === 'task_blocked') {
     return 'task_state';

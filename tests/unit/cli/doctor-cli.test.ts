@@ -262,6 +262,7 @@ describe('doctor cli', () => {
         shouldResume?: boolean;
         nextBestTool?: string;
         detailLevel?: string;
+        agentGuidance?: unknown;
         continuation?: {tool?: string; ready?: boolean; actionKey?: string};
         execution?: {executed: boolean; resumed: boolean; checkpoint?: {status: string}};
         summary?: {taskId: string};
@@ -271,8 +272,9 @@ describe('doctor cli', () => {
       assert.strictEqual(payload.outputMode, 'compact');
       assert.strictEqual(payload.outcome, 'success');
       assert.strictEqual(payload.shouldResume, false);
-      assert.strictEqual(payload.nextBestTool, 'inject_hook');
-      assert.strictEqual(payload.detailLevel, 'standard');
+      assert.strictEqual(payload.nextBestTool, undefined);
+      assert.strictEqual(payload.detailLevel, 'minimal');
+      assert.strictEqual(payload.agentGuidance, undefined);
       assert.strictEqual(payload.continuation?.ready, true);
       assert.strictEqual(payload.continuation?.tool, 'inject_hook');
       assert.strictEqual(payload.continuation?.actionKey, 'inject_hook');

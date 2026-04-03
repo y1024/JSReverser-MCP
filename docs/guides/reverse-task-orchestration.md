@@ -112,6 +112,8 @@
 
 - 默认不返回 `summary`
 - `suggestedSteps` 只保留最关键字段
+- 优先保留 `continuation`，可能裁掉重复的顶层 next-step 字段与 `agentGuidance`
+- `detailLevel` 会降到 `minimal`
 - 更适合大模型把结果当作“下一步决策输入”
 
 从指定步骤开始：

@@ -11,6 +11,7 @@ import {
   buildManageSummaryText,
   buildOrchestrationContinuation,
   buildTaskDiagnostics,
+  compactAgentPayload,
   compactManagePayload,
   type OutputMode,
 } from './tools/response-builder.js';
@@ -443,7 +444,7 @@ export async function executeKnowledgeCliCommand(
       execution: result.execution,
       confidence: result.advice.confidence,
     });
-    writeLine(JSON.stringify({
+    writeLine(JSON.stringify(compactAgentPayload({
       responseSummary: args.outputMode === 'compact'
         ? `已生成任务 ${result.taskId} 的 compact orchestration plan。`
         : `已生成任务 ${result.taskId} 的 orchestration plan。`,
@@ -462,7 +463,7 @@ export async function executeKnowledgeCliCommand(
       }),
       ...result,
       agentGuidance,
-    }, null, 2));
+    }, result.outputMode), null, 2));
     return true;
   }
 
@@ -523,7 +524,7 @@ export async function executeKnowledgeCliCommand(
         nextStepHint: String((result.state?.nextStepHint ?? 'manage_reverse_task:progress')),
       });
       const summaryText = buildManageSummaryText(action, result as unknown as Record<string, unknown>);
-      writeLine(JSON.stringify(compactManagePayload(action, {
+      writeLine(JSON.stringify(compactAgentPayload(compactManagePayload(action, {
         responseSummary: summaryText,
         diagnostics: buildTaskDiagnostics(action, outputMode, result.taskId),
         ...buildManageContinuation(action, {agentGuidance, ...result} as Record<string, unknown>, summaryText),
@@ -532,7 +533,7 @@ export async function executeKnowledgeCliCommand(
         ...result,
         artifacts: ['task.json', 'state.json', 'report.md', 'timeline.jsonl', 'runtime-evidence.jsonl'],
         agentGuidance,
-      }, outputMode), null, 2));
+      }, outputMode), outputMode), null, 2));
       return true;
     }
 
@@ -549,7 +550,7 @@ export async function executeKnowledgeCliCommand(
         status: result.status,
       });
       const summaryText = buildManageSummaryText(action, result as unknown as Record<string, unknown>);
-      writeLine(JSON.stringify(compactManagePayload(action, {
+      writeLine(JSON.stringify(compactAgentPayload(compactManagePayload(action, {
         responseSummary: summaryText,
         diagnostics: buildTaskDiagnostics(action, outputMode, result.taskId),
         ...buildManageContinuation(action, {agentGuidance, ...result} as Record<string, unknown>, summaryText),
@@ -558,7 +559,7 @@ export async function executeKnowledgeCliCommand(
         ...result,
         artifacts: ['task.json', 'state.json', 'report.md', 'timeline.jsonl', 'runtime-evidence.jsonl'],
         agentGuidance,
-      }, outputMode), null, 2));
+      }, outputMode), outputMode), null, 2));
       return true;
     }
 

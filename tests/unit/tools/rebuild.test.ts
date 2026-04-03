@@ -237,11 +237,12 @@ describe('rebuild bridge tools', () => {
       assert.ok(payload.diagnostics);
       assert.strictEqual(payload.outcome, 'partial');
       assert.strictEqual(payload.shouldResume, false);
-      assert.strictEqual(payload.detailLevel, 'standard');
+      assert.strictEqual(payload.detailLevel, 'minimal');
+      assert.strictEqual(payload.nextBestTool, undefined);
       const compactContinuation = payload.continuation as {tool?: string} | undefined;
       assert.strictEqual(compactContinuation?.tool, 'diff_env_requirements');
       assert.deepStrictEqual(payload.missingCapabilities, ['window']);
-      assert.ok(payload.agentGuidance);
+      assert.strictEqual(payload.agentGuidance, undefined);
     } finally {
       runtime.reverseTaskStore = originalStore;
       await rm(rootDir, {recursive: true, force: true});

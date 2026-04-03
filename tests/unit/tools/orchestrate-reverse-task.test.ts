@@ -448,11 +448,19 @@ describe('orchestrate_reverse_task tool', () => {
 
       const compactPayload = JSON.parse(compactResponse.lines[1] ?? '{}') as {
         responseSummary?: unknown;
+        detailLevel?: string;
         diagnostics?: Record<string, unknown>;
+        nextBestTool?: string;
+        fallbackPlan?: unknown;
+        agentGuidance?: unknown;
         orchestration: {suggestedSteps: Array<{tool: string; reason?: string}>};
       };
       assert.ok(typeof compactPayload.responseSummary === 'string');
+      assert.strictEqual(compactPayload.detailLevel, 'minimal');
       assert.ok(compactPayload.diagnostics);
+      assert.strictEqual(compactPayload.nextBestTool, undefined);
+      assert.strictEqual(compactPayload.fallbackPlan, undefined);
+      assert.strictEqual(compactPayload.agentGuidance, undefined);
       assert.ok(compactPayload.orchestration.suggestedSteps.every((step) => step.reason === undefined));
 
       const fallbackResponse = makeResponse();
