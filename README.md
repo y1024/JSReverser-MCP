@@ -204,6 +204,7 @@
 - 这三个工具现在也统一补了 `responseSummary` 和 `diagnostics` 顶层字段；其中 `responseSummary` 专门留给模型快速判断结果，而不会覆盖业务语义上的 `summary` 对象。
 - 现在还会补统一的续推字段：`outcome`、`shouldResume`、`shouldSwitchStrategy`、`nextBestTool`、`nextBestParams`，进一步减少模型自己读长结果做判断的成本。
 - 另外新增统一 `continuation` 对象：`{ ready, reason, tool, params, strategy, resumeCommand }`，方便模型直接取“下一跳”。
+- 现在又补了一层统一失败契约：`errorCode` / `errorType` / `retryable` / `blockedBy`，并固定返回 `detailLevel` 与 `continuation.actionKey`，方便模型做更稳定的分支判断。
 - `record_reverse_evidence`：把 hook / network / script 的关键观察正式写回 task artifact，供后续 summarize / progress / orchestration 复用。现在 summary/query 还会给出去重后的 `evidenceAggregates`，方便快速看 top URLs、top functions 和 env blockers。
 
 ### 页面自动化

@@ -529,6 +529,8 @@ export const getRebuildHealthReport = defineTool({
       outcome,
       shouldResume: analyzed.missingCapabilities.length === 0 && status !== 'blocked',
       shouldSwitchStrategy: analyzed.patchSuggestions.length > 0,
+      ...(status === 'blocked' ? {errorCode: 'task_blocked', errorType: 'task_blocked', retryable: false, blockedBy: 'task_state'} : {}),
+      detailLevel: 'standard',
       ...(nextBestTool ? {nextBestTool} : {}),
       ...(nextBestParams ? {nextBestParams} : {}),
       continuation: {
@@ -538,6 +540,7 @@ export const getRebuildHealthReport = defineTool({
         ...(nextBestParams ? {params: nextBestParams} : {}),
         ...(agentHints.recommendedStrategy ? {strategy: agentHints.recommendedStrategy} : {}),
         ...(agentHints.resumeHint ? {resumeCommand: agentHints.resumeHint} : {}),
+        ...(nextBestTool ? {actionKey: nextBestTool} : {}),
       },
       currentStage,
       status: agentHints.status === 'ok' ? status : agentHints.status,

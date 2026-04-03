@@ -79,6 +79,7 @@ describe('orchestrate_reverse_task tool', () => {
         shouldResume?: boolean;
         shouldSwitchStrategy?: boolean;
         nextBestTool?: string;
+        detailLevel?: string;
         continuation?: {ready?: boolean; tool?: string; strategy?: string};
         orchestration: {primaryStep: {tool: string}; suggestedSteps: Array<{tool: string}>};
         agentGuidance?: {recommendedTool?: string; recommendedParams?: Record<string, unknown>; recommendedStrategy?: string; resumeHint?: string; confidence?: number};
@@ -93,6 +94,7 @@ describe('orchestrate_reverse_task tool', () => {
       assert.strictEqual(payload.shouldResume, false);
       assert.strictEqual(payload.shouldSwitchStrategy, false);
       assert.strictEqual(payload.nextBestTool, 'export_rebuild_bundle');
+      assert.strictEqual(payload.detailLevel, 'standard');
       assert.strictEqual(payload.continuation?.ready, true);
       assert.strictEqual(payload.continuation?.tool, 'export_rebuild_bundle');
       assert.strictEqual(payload.continuation?.strategy, 'rebuild-first');
@@ -147,6 +149,10 @@ describe('orchestrate_reverse_task tool', () => {
       }, firstResponse as unknown as Parameters<typeof orchestrateReverseTaskTool.handler>[1], {} as Parameters<typeof orchestrateReverseTaskTool.handler>[2]);
 
       const firstPayload = JSON.parse(firstResponse.lines[1] ?? '{}') as {
+        errorCode?: string;
+        errorType?: string;
+        retryable?: boolean;
+        blockedBy?: string;
         ok: boolean;
         execution?: {
           executed: boolean;
@@ -160,6 +166,10 @@ describe('orchestrate_reverse_task tool', () => {
       assert.strictEqual(firstPayload.execution?.failedStep?.tool, 'understand_code');
       assert.strictEqual(firstPayload.execution?.failedStep?.failureType, 'tool_error');
       assert.strictEqual(firstPayload.execution?.failedStep?.retryable, true);
+      assert.strictEqual(firstPayload.errorCode, 'tool_error');
+      assert.strictEqual(firstPayload.errorType, 'tool_error');
+      assert.strictEqual(firstPayload.retryable, true);
+      assert.strictEqual(firstPayload.blockedBy, 'tooling');
       assert.ok((firstPayload.execution as {recovery?: {recommendedCommand?: string}} | undefined)?.recovery?.recommendedCommand?.includes('--execute --resume'));
       assert.strictEqual(firstPayload.execution?.checkpoint?.status, 'failed');
       assert.strictEqual(firstPayload.execution?.checkpoint?.failureType, 'tool_error');
@@ -465,7 +475,8 @@ describe('orchestrate_reverse_task tool', () => {
         shouldResume?: boolean;
         shouldSwitchStrategy?: boolean;
         nextBestTool?: string;
-        continuation?: {ready?: boolean; tool?: string; strategy?: string};
+        detailLevel?: string;
+        continuation?: {ready?: boolean; tool?: string; strategy?: string; actionKey?: string};
         agentGuidance?: {recommendedStrategy?: string};
         fallbackPlan?: {reason: string; recommendedStrategy?: string; steps: Array<{tool: string}>};
       };
@@ -473,9 +484,11 @@ describe('orchestrate_reverse_task tool', () => {
       assert.strictEqual(fallbackPayload.shouldResume, true);
       assert.strictEqual(fallbackPayload.shouldSwitchStrategy, true);
       assert.strictEqual(fallbackPayload.nextBestTool, 'diff_env_requirements');
+      assert.strictEqual(fallbackPayload.detailLevel, 'standard');
       assert.strictEqual(fallbackPayload.continuation?.ready, true);
       assert.strictEqual(fallbackPayload.continuation?.tool, 'diff_env_requirements');
       assert.strictEqual(fallbackPayload.continuation?.strategy, 'env-fix');
+      assert.strictEqual(fallbackPayload.continuation?.actionKey, 'diff_env_requirements');
       assert.strictEqual(fallbackPayload.agentGuidance?.recommendedStrategy, 'env-fix');
       assert.ok(fallbackPayload.fallbackPlan);
       assert.strictEqual(fallbackPayload.fallbackPlan?.recommendedStrategy, 'env-fix');

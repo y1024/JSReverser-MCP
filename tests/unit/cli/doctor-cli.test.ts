@@ -91,7 +91,7 @@ describe('doctor cli', () => {
       const progressLines: string[] = [];
       const progressHandled = await executeKnowledgeCliCommand({manageReverseTask: 'progress', taskId: 'task-cli-001'}, (line) => progressLines.push(line));
       assert.strictEqual(progressHandled, true);
-      const progressPayload = JSON.parse(progressLines[0]) as {action: string; currentStage: string; nextStepHint: string; reasoning: string[]; outcome?: string; shouldResume?: boolean; nextBestTool?: string; continuation?: {tool?: string; ready?: boolean}; agentGuidance?: {recommendedTool?: string; recommendedStrategy?: string}};
+      const progressPayload = JSON.parse(progressLines[0]) as {action: string; currentStage: string; nextStepHint: string; reasoning: string[]; outcome?: string; shouldResume?: boolean; nextBestTool?: string; detailLevel?: string; continuation?: {tool?: string; ready?: boolean; actionKey?: string}; agentGuidance?: {recommendedTool?: string; recommendedStrategy?: string}};
       assert.strictEqual(progressPayload.action, 'progress');
       assert.strictEqual(progressPayload.currentStage, 'Rebuild');
       assert.strictEqual(progressPayload.nextStepHint, 'export_rebuild_bundle');
@@ -99,8 +99,10 @@ describe('doctor cli', () => {
       assert.strictEqual(progressPayload.outcome, 'success');
       assert.strictEqual(progressPayload.shouldResume, true);
       assert.strictEqual(progressPayload.nextBestTool, 'export_rebuild_bundle');
+      assert.strictEqual(progressPayload.detailLevel, 'standard');
       assert.strictEqual(progressPayload.continuation?.ready, true);
       assert.strictEqual(progressPayload.continuation?.tool, 'export_rebuild_bundle');
+      assert.strictEqual(progressPayload.continuation?.actionKey, 'export_rebuild_bundle');
       assert.strictEqual(progressPayload.agentGuidance?.recommendedTool, 'export_rebuild_bundle');
       assert.strictEqual(progressPayload.agentGuidance?.recommendedStrategy, 'rebuild-first');
 
@@ -156,6 +158,10 @@ describe('doctor cli', () => {
       }, (line) => firstLines.push(line));
       assert.strictEqual(firstHandled, true);
       const firstPayload = JSON.parse(firstLines[0]) as {
+        errorCode?: string;
+        errorType?: string;
+        retryable?: boolean;
+        blockedBy?: string;
         execution?: {
           checkpoint?: {status: string; failedStepKey?: string; failureType?: string; retryable?: boolean};
           failedStep?: {tool: string; failureType?: string; retryable?: boolean};
@@ -167,6 +173,10 @@ describe('doctor cli', () => {
       assert.strictEqual(firstPayload.execution?.checkpoint?.failureType, 'tool_error');
       assert.strictEqual(firstPayload.execution?.checkpoint?.retryable, true);
       assert.strictEqual(firstPayload.execution?.failedStep?.tool, 'inject_hook');
+      assert.strictEqual(firstPayload.errorCode, 'tool_error');
+      assert.strictEqual(firstPayload.errorType, 'tool_error');
+      assert.strictEqual(firstPayload.retryable, true);
+      assert.strictEqual(firstPayload.blockedBy, 'tooling');
       assert.ok(firstPayload.execution?.recovery?.recommendedCommand?.includes('--execute --resume'));
       assert.strictEqual(firstPayload.execution?.recovery?.shouldResume, true);
 
@@ -251,7 +261,8 @@ describe('doctor cli', () => {
         outcome?: string;
         shouldResume?: boolean;
         nextBestTool?: string;
-        continuation?: {tool?: string; ready?: boolean};
+        detailLevel?: string;
+        continuation?: {tool?: string; ready?: boolean; actionKey?: string};
         execution?: {executed: boolean; resumed: boolean; checkpoint?: {status: string}};
         summary?: {taskId: string};
         orchestration: {primaryStep: {tool: string}};
@@ -261,8 +272,10 @@ describe('doctor cli', () => {
       assert.strictEqual(payload.outcome, 'success');
       assert.strictEqual(payload.shouldResume, false);
       assert.strictEqual(payload.nextBestTool, 'inject_hook');
+      assert.strictEqual(payload.detailLevel, 'standard');
       assert.strictEqual(payload.continuation?.ready, true);
       assert.strictEqual(payload.continuation?.tool, 'inject_hook');
+      assert.strictEqual(payload.continuation?.actionKey, 'inject_hook');
       assert.strictEqual(payload.execution?.executed, true);
       assert.strictEqual(payload.execution?.resumed, true);
       assert.strictEqual(payload.execution?.checkpoint?.status, 'passed');

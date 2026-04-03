@@ -19,6 +19,13 @@ type OutputMode = 'compact' | 'verbose';
 type AgentOutcome = 'success' | 'partial' | 'blocked';
 const taskArtifacts = ['task.json', 'state.json', 'report.md', 'timeline.jsonl', 'runtime-evidence.jsonl'];
 
+function inferBlockedBy(status: unknown): string | undefined {
+  if (status === 'blocked') {
+    return 'task_state';
+  }
+  return undefined;
+}
+
 function compactManagePayload(
   action: string,
   payload: Record<string, unknown>,
@@ -82,6 +89,10 @@ function buildManageContinuationFields(
   shouldSwitchStrategy: boolean;
   nextBestTool?: string;
   nextBestParams?: Record<string, unknown>;
+  errorCode?: string;
+  errorType?: string;
+  retryable?: boolean;
+  blockedBy?: string;
 } {
   const hints = payload.agentGuidance as
     | {recommendedTool?: string; recommendedParams?: Record<string, unknown>; recommendedStrategy?: string}
@@ -97,6 +108,7 @@ function buildManageContinuationFields(
     shouldSwitchStrategy: ['rebuild-first', 'env-fix', 'artifact-sync', 'evidence-only'].includes(String(hints?.recommendedStrategy ?? '')),
     ...(hints?.recommendedTool ? {nextBestTool: hints.recommendedTool} : {}),
     ...(hints?.recommendedParams ? {nextBestParams: hints.recommendedParams} : {}),
+    ...(outcome === 'blocked' ? {errorCode: 'task_blocked', errorType: 'task_blocked', retryable: false, blockedBy: inferBlockedBy(status)} : {}),
   };
 }
 
@@ -109,6 +121,11 @@ function buildManageContinuation(
   shouldSwitchStrategy: boolean;
   nextBestTool?: string;
   nextBestParams?: Record<string, unknown>;
+  errorCode?: string;
+  errorType?: string;
+  retryable?: boolean;
+  blockedBy?: string;
+  detailLevel: 'minimal' | 'standard';
   continuation: {
     ready: boolean;
     reason: string;
@@ -116,6 +133,7 @@ function buildManageContinuation(
     params?: Record<string, unknown>;
     strategy?: string;
     resumeCommand?: string;
+    actionKey?: string;
   };
 } {
   const fields = buildManageContinuationFields(action, payload);
@@ -131,7 +149,9 @@ function buildManageContinuation(
       ...(fields.nextBestParams ? {params: fields.nextBestParams} : {}),
       ...(hints?.recommendedStrategy ? {strategy: hints.recommendedStrategy} : {}),
       ...(hints?.resumeHint ? {resumeCommand: hints.resumeHint} : {}),
+      ...(fields.nextBestTool ? {actionKey: fields.nextBestTool} : {}),
     },
+    detailLevel: 'standard',
   };
 }
 

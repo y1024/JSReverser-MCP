@@ -175,6 +175,7 @@ describe('rebuild bridge tools', () => {
       assert.strictEqual(payload.shouldResume, false);
       assert.strictEqual(payload.shouldSwitchStrategy, true);
       assert.strictEqual(payload.nextBestTool, 'diff_env_requirements');
+      assert.strictEqual(payload.detailLevel, 'standard');
       const continuation = payload.continuation as {ready?: boolean; tool?: string} | undefined;
       assert.strictEqual(continuation?.ready, true);
       assert.strictEqual(continuation?.tool, 'diff_env_requirements');
@@ -236,6 +237,7 @@ describe('rebuild bridge tools', () => {
       assert.ok(payload.diagnostics);
       assert.strictEqual(payload.outcome, 'partial');
       assert.strictEqual(payload.shouldResume, false);
+      assert.strictEqual(payload.detailLevel, 'standard');
       const compactContinuation = payload.continuation as {tool?: string} | undefined;
       assert.strictEqual(compactContinuation?.tool, 'diff_env_requirements');
       assert.deepStrictEqual(payload.missingCapabilities, ['window']);

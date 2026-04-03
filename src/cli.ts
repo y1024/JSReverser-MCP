@@ -412,6 +412,27 @@ export async function executeKnowledgeCliCommand(
   writeLine: (line: string) => void = (line) => console.log(line),
 ): Promise<boolean> {
   type AgentOutcome = 'success' | 'partial' | 'blocked';
+  const inferBlockedBy = (statusOrFailure: unknown): string | undefined => {
+    if (statusOrFailure === 'blocked' || statusOrFailure === 'task_blocked') {
+      return 'task_state';
+    }
+    if (statusOrFailure === 'env_error') {
+      return 'environment';
+    }
+    if (statusOrFailure === 'external_error') {
+      return 'external_dependency';
+    }
+    if (statusOrFailure === 'validation_error') {
+      return 'input_validation';
+    }
+    if (statusOrFailure === 'tool_error') {
+      return 'tooling';
+    }
+    if (statusOrFailure === 'unknown') {
+      return 'unknown';
+    }
+    return undefined;
+  };
   const compactManagePayload = (
     action: string,
     payload: Record<string, unknown>,
@@ -448,6 +469,10 @@ export async function executeKnowledgeCliCommand(
     shouldSwitchStrategy: boolean;
     nextBestTool?: string;
     nextBestParams?: Record<string, unknown>;
+    errorCode?: string;
+    errorType?: string;
+    retryable?: boolean;
+    blockedBy?: string;
   } => {
     const hints = payload.agentGuidance as
       | {recommendedTool?: string; recommendedParams?: Record<string, unknown>; recommendedStrategy?: string}
@@ -463,6 +488,7 @@ export async function executeKnowledgeCliCommand(
       shouldSwitchStrategy: ['rebuild-first', 'env-fix', 'artifact-sync', 'evidence-only'].includes(String(hints?.recommendedStrategy ?? '')),
       ...(hints?.recommendedTool ? {nextBestTool: hints.recommendedTool} : {}),
       ...(hints?.recommendedParams ? {nextBestParams: hints.recommendedParams} : {}),
+      ...(outcome === 'blocked' ? {errorCode: 'task_blocked', errorType: 'task_blocked', retryable: false, blockedBy: inferBlockedBy('task_blocked')} : {}),
     };
   };
   const buildManageContinuation = (
@@ -476,7 +502,9 @@ export async function executeKnowledgeCliCommand(
       params?: Record<string, unknown>;
       strategy?: string;
       resumeCommand?: string;
+      actionKey?: string;
     };
+    detailLevel: 'minimal' | 'standard';
   } => {
     const fields = buildManageContinuationFields(action, payload);
     const hints = payload.agentGuidance as
@@ -491,7 +519,9 @@ export async function executeKnowledgeCliCommand(
         ...(fields.nextBestParams ? {params: fields.nextBestParams} : {}),
         ...(hints?.recommendedStrategy ? {strategy: hints.recommendedStrategy} : {}),
         ...(hints?.resumeHint ? {resumeCommand: hints.resumeHint} : {}),
+        ...(fields.nextBestTool ? {actionKey: fields.nextBestTool} : {}),
       },
+      detailLevel: 'standard',
     };
   };
   const buildOrchestrationContinuationFields = (result: {
@@ -504,6 +534,10 @@ export async function executeKnowledgeCliCommand(
     shouldSwitchStrategy: boolean;
     nextBestTool?: string;
     nextBestParams?: Record<string, unknown>;
+    errorCode?: string;
+    errorType?: string;
+    retryable?: boolean;
+    blockedBy?: string;
     continuation: {
       ready: boolean;
       reason: string;
@@ -511,10 +545,13 @@ export async function executeKnowledgeCliCommand(
       params?: Record<string, unknown>;
       strategy?: string;
       resumeCommand?: string;
+      actionKey?: string;
     };
+    detailLevel: 'minimal' | 'standard';
   } => {
     const shouldResume = Boolean(result.execution?.recovery?.shouldResume);
     const nextStep = result.fallbackPlan?.steps[0];
+    const failedStep = result.execution?.failedStep as {failureType?: string; retryable?: boolean} | undefined;
     const outcome = result.execution?.failedStep
       ? (shouldResume ? 'partial' : 'blocked')
       : 'success';
@@ -526,6 +563,9 @@ export async function executeKnowledgeCliCommand(
       shouldSwitchStrategy: Boolean(result.fallbackPlan?.recommendedStrategy),
       ...(nextBestTool ? {nextBestTool} : {}),
       ...(nextBestParams ? {nextBestParams} : {}),
+      ...(failedStep?.failureType ? {errorCode: failedStep.failureType, errorType: failedStep.failureType} : {}),
+      ...(failedStep?.retryable !== undefined ? {retryable: failedStep.retryable} : {}),
+      ...(inferBlockedBy(failedStep?.failureType) ? {blockedBy: inferBlockedBy(failedStep?.failureType)} : {}),
       continuation: {
         ready: outcome !== 'blocked',
         reason: result.agentGuidance?.summary ?? '已生成下一步编排建议。',
@@ -535,7 +575,9 @@ export async function executeKnowledgeCliCommand(
           ? {strategy: result.fallbackPlan?.recommendedStrategy ?? result.agentGuidance?.recommendedStrategy}
           : {}),
         ...(result.agentGuidance?.resumeHint ? {resumeCommand: result.agentGuidance.resumeHint} : {}),
+        ...(nextBestTool ? {actionKey: nextBestTool} : {}),
       },
+      detailLevel: 'standard',
     };
   };
 
