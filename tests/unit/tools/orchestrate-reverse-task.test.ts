@@ -79,6 +79,7 @@ describe('orchestrate_reverse_task tool', () => {
         shouldResume?: boolean;
         shouldSwitchStrategy?: boolean;
         nextBestTool?: string;
+        continuation?: {ready?: boolean; tool?: string; strategy?: string};
         orchestration: {primaryStep: {tool: string}; suggestedSteps: Array<{tool: string}>};
         agentGuidance?: {recommendedTool?: string; recommendedParams?: Record<string, unknown>; recommendedStrategy?: string; resumeHint?: string; confidence?: number};
       };
@@ -92,6 +93,9 @@ describe('orchestrate_reverse_task tool', () => {
       assert.strictEqual(payload.shouldResume, false);
       assert.strictEqual(payload.shouldSwitchStrategy, false);
       assert.strictEqual(payload.nextBestTool, 'export_rebuild_bundle');
+      assert.strictEqual(payload.continuation?.ready, true);
+      assert.strictEqual(payload.continuation?.tool, 'export_rebuild_bundle');
+      assert.strictEqual(payload.continuation?.strategy, 'rebuild-first');
       assert.strictEqual(payload.agentGuidance?.recommendedTool, 'export_rebuild_bundle');
       assert.strictEqual(payload.agentGuidance?.recommendedStrategy, 'rebuild-first');
       assert.deepStrictEqual(payload.agentGuidance?.recommendedParams, {taskId: 'task-orchestrate-001'});
@@ -461,6 +465,7 @@ describe('orchestrate_reverse_task tool', () => {
         shouldResume?: boolean;
         shouldSwitchStrategy?: boolean;
         nextBestTool?: string;
+        continuation?: {ready?: boolean; tool?: string; strategy?: string};
         agentGuidance?: {recommendedStrategy?: string};
         fallbackPlan?: {reason: string; recommendedStrategy?: string; steps: Array<{tool: string}>};
       };
@@ -468,6 +473,9 @@ describe('orchestrate_reverse_task tool', () => {
       assert.strictEqual(fallbackPayload.shouldResume, true);
       assert.strictEqual(fallbackPayload.shouldSwitchStrategy, true);
       assert.strictEqual(fallbackPayload.nextBestTool, 'diff_env_requirements');
+      assert.strictEqual(fallbackPayload.continuation?.ready, true);
+      assert.strictEqual(fallbackPayload.continuation?.tool, 'diff_env_requirements');
+      assert.strictEqual(fallbackPayload.continuation?.strategy, 'env-fix');
       assert.strictEqual(fallbackPayload.agentGuidance?.recommendedStrategy, 'env-fix');
       assert.ok(fallbackPayload.fallbackPlan);
       assert.strictEqual(fallbackPayload.fallbackPlan?.recommendedStrategy, 'env-fix');

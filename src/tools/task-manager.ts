@@ -100,6 +100,41 @@ function buildManageContinuationFields(
   };
 }
 
+function buildManageContinuation(
+  action: string,
+  payload: Record<string, unknown>,
+): {
+  outcome: AgentOutcome;
+  shouldResume: boolean;
+  shouldSwitchStrategy: boolean;
+  nextBestTool?: string;
+  nextBestParams?: Record<string, unknown>;
+  continuation: {
+    ready: boolean;
+    reason: string;
+    tool?: string;
+    params?: Record<string, unknown>;
+    strategy?: string;
+    resumeCommand?: string;
+  };
+} {
+  const fields = buildManageContinuationFields(action, payload);
+  const hints = payload.agentGuidance as
+    | {summary?: string; recommendedStrategy?: string; resumeHint?: string}
+    | undefined;
+  return {
+    ...fields,
+    continuation: {
+      ready: fields.outcome !== 'blocked',
+      reason: hints?.summary ?? buildManageSummary(action, payload),
+      ...(fields.nextBestTool ? {tool: fields.nextBestTool} : {}),
+      ...(fields.nextBestParams ? {params: fields.nextBestParams} : {}),
+      ...(hints?.recommendedStrategy ? {strategy: hints.recommendedStrategy} : {}),
+      ...(hints?.resumeHint ? {resumeCommand: hints.resumeHint} : {}),
+    },
+  };
+}
+
 export const manageReverseTaskTool = defineTool({
   name: 'manage_reverse_task',
   description: 'Unified reverse task entry for list/get/summarize/progress/update/timeline/archive/restore/search/tag/prune/compare actions. Preferred task-management entry to reduce tool-selection overhead.',
@@ -162,7 +197,7 @@ export const manageReverseTaskTool = defineTool({
       response.appendResponseLine(JSON.stringify(compactManagePayload(action, {
         responseSummary: buildManageSummary(action, payload),
         diagnostics: buildManageDiagnostics(action, outputMode, typeof payload.taskId === 'string' ? payload.taskId : undefined),
-        ...buildManageContinuationFields(action, payload),
+        ...buildManageContinuation(action, payload),
         ...payload,
         outputMode,
       }, outputMode), null, 2));

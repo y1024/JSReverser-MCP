@@ -9,30 +9,45 @@ import {getJSHookRuntime} from './runtime.js';
 function buildOrchestrationContinuationFields(result: {
   fallbackPlan?: {steps: Array<{tool: string; params: Record<string, unknown>}>; recommendedStrategy?: string};
   execution?: {failedStep?: unknown; recovery?: {shouldResume?: boolean}};
-  agentGuidance?: {recommendedTool?: string; recommendedParams?: Record<string, unknown>};
+  agentGuidance?: {summary?: string; recommendedTool?: string; recommendedParams?: Record<string, unknown>; recommendedStrategy?: string; resumeHint?: string};
 }): {
   outcome: 'success' | 'partial' | 'blocked';
   shouldResume: boolean;
   shouldSwitchStrategy: boolean;
   nextBestTool?: string;
   nextBestParams?: Record<string, unknown>;
+  continuation: {
+    ready: boolean;
+    reason: string;
+    tool?: string;
+    params?: Record<string, unknown>;
+    strategy?: string;
+    resumeCommand?: string;
+  };
 } {
   const shouldResume = Boolean(result.execution?.recovery?.shouldResume);
   const nextStep = result.fallbackPlan?.steps[0];
+  const outcome = result.execution?.failedStep
+    ? (shouldResume ? 'partial' : 'blocked')
+    : 'success';
+  const nextBestTool = nextStep?.tool ?? result.agentGuidance?.recommendedTool;
+  const nextBestParams = nextStep?.params ?? result.agentGuidance?.recommendedParams;
   return {
-    outcome: result.execution?.failedStep
-      ? (shouldResume ? 'partial' : 'blocked')
-      : 'success',
+    outcome,
     shouldResume,
     shouldSwitchStrategy: Boolean(result.fallbackPlan?.recommendedStrategy),
-    ...(nextStep?.tool
-      ? {nextBestTool: nextStep.tool, nextBestParams: nextStep.params}
-      : result.agentGuidance?.recommendedTool
-        ? {
-          nextBestTool: result.agentGuidance.recommendedTool,
-          ...(result.agentGuidance.recommendedParams ? {nextBestParams: result.agentGuidance.recommendedParams} : {}),
-        }
+    ...(nextBestTool ? {nextBestTool} : {}),
+    ...(nextBestParams ? {nextBestParams} : {}),
+    continuation: {
+      ready: outcome !== 'blocked',
+      reason: result.agentGuidance?.summary ?? '已生成下一步编排建议。',
+      ...(nextBestTool ? {tool: nextBestTool} : {}),
+      ...(nextBestParams ? {params: nextBestParams} : {}),
+      ...(result.fallbackPlan?.recommendedStrategy ?? result.agentGuidance?.recommendedStrategy
+        ? {strategy: result.fallbackPlan?.recommendedStrategy ?? result.agentGuidance?.recommendedStrategy}
         : {}),
+      ...(result.agentGuidance?.resumeHint ? {resumeCommand: result.agentGuidance.resumeHint} : {}),
+    },
   };
 }
 

@@ -91,7 +91,7 @@ describe('doctor cli', () => {
       const progressLines: string[] = [];
       const progressHandled = await executeKnowledgeCliCommand({manageReverseTask: 'progress', taskId: 'task-cli-001'}, (line) => progressLines.push(line));
       assert.strictEqual(progressHandled, true);
-      const progressPayload = JSON.parse(progressLines[0]) as {action: string; currentStage: string; nextStepHint: string; reasoning: string[]; outcome?: string; shouldResume?: boolean; nextBestTool?: string; agentGuidance?: {recommendedTool?: string; recommendedStrategy?: string}};
+      const progressPayload = JSON.parse(progressLines[0]) as {action: string; currentStage: string; nextStepHint: string; reasoning: string[]; outcome?: string; shouldResume?: boolean; nextBestTool?: string; continuation?: {tool?: string; ready?: boolean}; agentGuidance?: {recommendedTool?: string; recommendedStrategy?: string}};
       assert.strictEqual(progressPayload.action, 'progress');
       assert.strictEqual(progressPayload.currentStage, 'Rebuild');
       assert.strictEqual(progressPayload.nextStepHint, 'export_rebuild_bundle');
@@ -99,6 +99,8 @@ describe('doctor cli', () => {
       assert.strictEqual(progressPayload.outcome, 'success');
       assert.strictEqual(progressPayload.shouldResume, true);
       assert.strictEqual(progressPayload.nextBestTool, 'export_rebuild_bundle');
+      assert.strictEqual(progressPayload.continuation?.ready, true);
+      assert.strictEqual(progressPayload.continuation?.tool, 'export_rebuild_bundle');
       assert.strictEqual(progressPayload.agentGuidance?.recommendedTool, 'export_rebuild_bundle');
       assert.strictEqual(progressPayload.agentGuidance?.recommendedStrategy, 'rebuild-first');
 
@@ -249,6 +251,7 @@ describe('doctor cli', () => {
         outcome?: string;
         shouldResume?: boolean;
         nextBestTool?: string;
+        continuation?: {tool?: string; ready?: boolean};
         execution?: {executed: boolean; resumed: boolean; checkpoint?: {status: string}};
         summary?: {taskId: string};
         orchestration: {primaryStep: {tool: string}};
@@ -258,6 +261,8 @@ describe('doctor cli', () => {
       assert.strictEqual(payload.outcome, 'success');
       assert.strictEqual(payload.shouldResume, false);
       assert.strictEqual(payload.nextBestTool, 'inject_hook');
+      assert.strictEqual(payload.continuation?.ready, true);
+      assert.strictEqual(payload.continuation?.tool, 'inject_hook');
       assert.strictEqual(payload.execution?.executed, true);
       assert.strictEqual(payload.execution?.resumed, true);
       assert.strictEqual(payload.execution?.checkpoint?.status, 'passed');

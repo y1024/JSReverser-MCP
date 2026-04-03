@@ -509,6 +509,13 @@ export const getRebuildHealthReport = defineTool({
     const outputMode = request.params.outputMode ?? 'verbose';
 
     response.appendResponseLine('```json');
+    const outcome = status === 'blocked'
+      ? 'blocked'
+      : analyzed.missingCapabilities.length > 0 || analyzed.patchSuggestions.length > 0
+        ? 'partial'
+        : 'success';
+    const nextBestTool = agentHints.recommendedTool;
+    const nextBestParams = agentHints.recommendedParams;
     response.appendResponseLine(JSON.stringify({
       taskId: request.params.taskId,
       outputMode,
@@ -519,15 +526,19 @@ export const getRebuildHealthReport = defineTool({
         taskId: request.params.taskId,
         hasPatchSuggestions: analyzed.patchSuggestions.length > 0,
       },
-      outcome: status === 'blocked'
-        ? 'blocked'
-        : analyzed.missingCapabilities.length > 0 || analyzed.patchSuggestions.length > 0
-          ? 'partial'
-          : 'success',
+      outcome,
       shouldResume: analyzed.missingCapabilities.length === 0 && status !== 'blocked',
       shouldSwitchStrategy: analyzed.patchSuggestions.length > 0,
-      ...(agentHints.recommendedTool ? {nextBestTool: agentHints.recommendedTool} : {}),
-      ...(agentHints.recommendedParams ? {nextBestParams: agentHints.recommendedParams} : {}),
+      ...(nextBestTool ? {nextBestTool} : {}),
+      ...(nextBestParams ? {nextBestParams} : {}),
+      continuation: {
+        ready: outcome !== 'blocked',
+        reason: agentHints.summary,
+        ...(nextBestTool ? {tool: nextBestTool} : {}),
+        ...(nextBestParams ? {params: nextBestParams} : {}),
+        ...(agentHints.recommendedStrategy ? {strategy: agentHints.recommendedStrategy} : {}),
+        ...(agentHints.resumeHint ? {resumeCommand: agentHints.resumeHint} : {}),
+      },
       currentStage,
       status: agentHints.status === 'ok' ? status : agentHints.status,
       currentSummary,
