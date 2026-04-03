@@ -168,6 +168,7 @@ describe('rebuild bridge tools', () => {
       assert.strictEqual(payload.currentStage, 'Patch');
       assert.strictEqual(payload.status, 'active');
       assert.strictEqual(payload.currentSummary, 'ReferenceError: window is not defined');
+      assert.ok((payload.artifacts as string[]).includes('report.md'));
       assert.deepStrictEqual(payload.missingCapabilities, ['window']);
       assert.ok(Array.isArray(payload.patchSuggestions));
       assert.ok((payload.patchSuggestions as Array<Record<string, unknown>>).some((item) => item.capability === 'window'));

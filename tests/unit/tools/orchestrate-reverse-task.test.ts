@@ -446,10 +446,11 @@ describe('orchestrate_reverse_task tool', () => {
 
       const fallbackPayload = JSON.parse(fallbackResponse.lines[1] ?? '{}') as {
         agentGuidance?: {recommendedStrategy?: string};
-        fallbackPlan?: {reason: string; steps: Array<{tool: string}>};
+        fallbackPlan?: {reason: string; recommendedStrategy?: string; steps: Array<{tool: string}>};
       };
       assert.strictEqual(fallbackPayload.agentGuidance?.recommendedStrategy, 'env-fix');
       assert.ok(fallbackPayload.fallbackPlan);
+      assert.strictEqual(fallbackPayload.fallbackPlan?.recommendedStrategy, 'env-fix');
       assert.ok(fallbackPayload.fallbackPlan?.steps.some((step) => step.tool === 'diff_env_requirements'));
       assert.ok(fallbackPayload.fallbackPlan?.steps.some((step) => step.tool === 'manage_reverse_task'));
     } finally {

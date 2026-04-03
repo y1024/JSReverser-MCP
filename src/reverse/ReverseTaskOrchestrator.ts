@@ -96,13 +96,14 @@ function buildStrategyPrimaryStep(
 function buildFallbackPlan(
   taskId: string,
   execution: Awaited<ReturnType<typeof executeReverseTaskPlan>> | undefined,
-): {reason: string; steps: OrchestrationStep[]} | undefined {
+): {reason: string; recommendedStrategy?: 'observe-first' | 'rebuild-first' | 'env-fix' | 'artifact-sync' | 'evidence-only'; steps: OrchestrationStep[]} | undefined {
   if (!execution?.failedStep?.failureType) {
     return undefined;
   }
   if (execution.failedStep.failureType === 'env_error') {
     return {
       reason: '当前失败更像补环境缺口，优先切换到 env-fix 路径。',
+      recommendedStrategy: 'env-fix',
       steps: [
         {
           key: buildStepKey('diff_env_requirements', {taskId}),
@@ -117,11 +118,13 @@ function buildFallbackPlan(
   if (execution.failedStep.failureType === 'tool_error') {
     return {
       reason: '当前失败更像工具执行问题，先回到任务摘要，再决定是否 resume。',
+      recommendedStrategy: 'evidence-only',
       steps: [buildManageTaskStep(taskId, 'summarize', 'Observe')],
     };
   }
   return {
     reason: '当前失败需要先重新对齐任务上下文。',
+    recommendedStrategy: 'observe-first',
     steps: [buildManageTaskStep(taskId, 'get', 'Observe')],
   };
 }
@@ -170,7 +173,7 @@ export async function orchestrateReverseTask(
     suggestedSteps: OrchestrationStep[];
   };
   outputMode: OutputMode;
-  fallbackPlan?: {reason: string; steps: OrchestrationStep[]};
+  fallbackPlan?: {reason: string; recommendedStrategy?: 'observe-first' | 'rebuild-first' | 'env-fix' | 'artifact-sync' | 'evidence-only'; steps: OrchestrationStep[]};
   execution?: Awaited<ReturnType<typeof executeReverseTaskPlan>>;
   summary?: Awaited<ReturnType<typeof getReverseTaskState>>;
 }> {

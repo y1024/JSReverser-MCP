@@ -16,6 +16,7 @@ import {getJSHookRuntime} from './runtime.js';
 
 const stageSchema = zod.enum(['Observe', 'Capture', 'Rebuild', 'Patch', 'DeepDive', 'PureExtraction', 'Port']);
 type OutputMode = 'compact' | 'verbose';
+const taskArtifacts = ['task.json', 'state.json', 'report.md', 'timeline.jsonl', 'runtime-evidence.jsonl'];
 
 function compactManagePayload(
   action: string,
@@ -130,6 +131,7 @@ export const manageReverseTaskTool = defineTool({
       writeJson({
         action,
         items,
+        artifacts: ['artifacts/tasks/<taskId>/'],
         agentGuidance: buildManageTaskAgentHints({action, itemCount: items.length}),
       });
       return;
@@ -143,6 +145,7 @@ export const manageReverseTaskTool = defineTool({
       writeJson({
         action,
         ...result,
+        artifacts: taskArtifacts,
         agentGuidance: buildManageTaskAgentHints({
           action,
           taskId: result.taskId,
@@ -160,6 +163,7 @@ export const manageReverseTaskTool = defineTool({
       writeJson({
         action,
         ...result,
+        artifacts: taskArtifacts,
         agentGuidance: buildManageTaskAgentHints({
           action,
           taskId: result.taskId,
@@ -177,6 +181,7 @@ export const manageReverseTaskTool = defineTool({
         ok: true,
         action,
         ...result,
+        artifacts: ['state.json', 'report.md'],
         agentGuidance: buildManageTaskAgentHints({
           action,
           taskId: result.taskId,
@@ -190,13 +195,13 @@ export const manageReverseTaskTool = defineTool({
 
     if (action === 'archive') {
       const result = await archiveReverseTask(runtime.reverseTaskStore, requireTaskId());
-      writeJson({ok: true, action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
+      writeJson({ok: true, action, ...result, artifacts: ['task.json'], agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
       return;
     }
 
     if (action === 'restore') {
       const result = await restoreReverseTask(runtime.reverseTaskStore, requireTaskId());
-      writeJson({ok: true, action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
+      writeJson({ok: true, action, ...result, artifacts: ['task.json'], agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
       return;
     }
 
@@ -211,6 +216,7 @@ export const manageReverseTaskTool = defineTool({
         ok: true,
         action,
         items,
+        artifacts: ['task.json'],
         agentGuidance: buildManageTaskAgentHints({action, itemCount: items.length}),
       });
       return;
@@ -223,7 +229,7 @@ export const manageReverseTaskTool = defineTool({
         request.params.tags ?? [],
         {replace: request.params.replaceTags},
       );
-      writeJson({ok: true, action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
+      writeJson({ok: true, action, ...result, artifacts: ['task.json'], agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
       return;
     }
 
@@ -231,7 +237,7 @@ export const manageReverseTaskTool = defineTool({
       const result = await pruneReverseTasks(runtime.reverseTaskStore, {
         olderThanDays: request.params.pruneOlderThanDays,
       });
-      writeJson({ok: true, action, ...result, agentGuidance: buildManageTaskAgentHints({action})});
+      writeJson({ok: true, action, ...result, artifacts: ['artifacts/tasks/<archived-task-id>/'], agentGuidance: buildManageTaskAgentHints({action})});
       return;
     }
 
@@ -241,6 +247,7 @@ export const manageReverseTaskTool = defineTool({
         ok: true,
         action,
         ...result,
+        artifacts: taskArtifacts,
         agentGuidance: buildManageTaskAgentHints({
           action,
           taskId: result.leftTaskId,
@@ -262,7 +269,7 @@ export const manageReverseTaskTool = defineTool({
         nextStepHint: request.params.nextStepHint,
         successCriteria: request.params.successCriteria,
       });
-      writeJson({ok: true, action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
+      writeJson({ok: true, action, ...result, artifacts: ['state.json', 'report.md'], agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
       return;
     }
 
@@ -279,7 +286,7 @@ export const manageReverseTaskTool = defineTool({
         next: request.params.next,
         detail: request.params.detail,
       });
-      writeJson({ok: true, action, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
+      writeJson({ok: true, action, ...result, artifacts: ['timeline.jsonl', 'report.md'], agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})});
     }
   },
 });

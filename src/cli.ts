@@ -500,7 +500,7 @@ export async function executeKnowledgeCliCommand(
         limit: typeof args.reverseTaskLimit === 'number' ? args.reverseTaskLimit : undefined,
         includeArchived: Boolean(args.includeArchived),
       });
-      writeLine(JSON.stringify({action, outputMode, items, agentGuidance: buildManageTaskAgentHints({action, itemCount: items.length})}, null, 2));
+      writeLine(JSON.stringify({action, outputMode, items, artifacts: ['artifacts/tasks/<taskId>/'], agentGuidance: buildManageTaskAgentHints({action, itemCount: items.length})}, null, 2));
       return true;
     }
 
@@ -513,6 +513,7 @@ export async function executeKnowledgeCliCommand(
         action,
         outputMode,
         ...result,
+        artifacts: ['task.json', 'state.json', 'report.md', 'timeline.jsonl', 'runtime-evidence.jsonl'],
         agentGuidance: buildManageTaskAgentHints({
           action,
           taskId: result.taskId,
@@ -531,6 +532,7 @@ export async function executeKnowledgeCliCommand(
         action,
         outputMode,
         ...result,
+        artifacts: ['task.json', 'state.json', 'report.md', 'timeline.jsonl', 'runtime-evidence.jsonl'],
         agentGuidance: buildManageTaskAgentHints({
           action,
           taskId: result.taskId,
@@ -548,6 +550,7 @@ export async function executeKnowledgeCliCommand(
         action,
         outputMode,
         ...result,
+        artifacts: ['state.json', 'report.md'],
         agentGuidance: buildManageTaskAgentHints({
           action,
           taskId: result.taskId,
@@ -562,14 +565,14 @@ export async function executeKnowledgeCliCommand(
     if (action === 'archive') {
       const {archiveReverseTask} = await import('./reverse/ReverseTaskAdmin.js');
       const result = await archiveReverseTask(store, String(args.taskId));
-      writeLine(JSON.stringify({action, outputMode, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
+      writeLine(JSON.stringify({action, outputMode, ...result, artifacts: ['task.json'], agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
       return true;
     }
 
     if (action === 'restore') {
       const {restoreReverseTask} = await import('./reverse/ReverseTaskAdmin.js');
       const result = await restoreReverseTask(store, String(args.taskId));
-      writeLine(JSON.stringify({action, outputMode, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
+      writeLine(JSON.stringify({action, outputMode, ...result, artifacts: ['task.json'], agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
       return true;
     }
 
@@ -581,7 +584,7 @@ export async function executeKnowledgeCliCommand(
         includeArchived: Boolean(args.includeArchived),
         limit: typeof args.reverseTaskLimit === 'number' ? args.reverseTaskLimit : undefined,
       });
-      writeLine(JSON.stringify({action, outputMode, items, agentGuidance: buildManageTaskAgentHints({action, itemCount: items.length})}, null, 2));
+      writeLine(JSON.stringify({action, outputMode, items, artifacts: ['task.json'], agentGuidance: buildManageTaskAgentHints({action, itemCount: items.length})}, null, 2));
       return true;
     }
 
@@ -593,7 +596,7 @@ export async function executeKnowledgeCliCommand(
         Array.isArray(args.tags) ? args.tags.map(String) : [],
         {replace: Boolean(args.replaceTags)},
       );
-      writeLine(JSON.stringify({action, outputMode, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
+      writeLine(JSON.stringify({action, outputMode, ...result, artifacts: ['task.json'], agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
       return true;
     }
 
@@ -602,7 +605,7 @@ export async function executeKnowledgeCliCommand(
       const result = await pruneReverseTasks(store, {
         olderThanDays: typeof args.pruneOlderThanDays === 'number' ? args.pruneOlderThanDays : undefined,
       });
-      writeLine(JSON.stringify({action, outputMode, ...result, agentGuidance: buildManageTaskAgentHints({action})}, null, 2));
+      writeLine(JSON.stringify({action, outputMode, ...result, artifacts: ['artifacts/tasks/<archived-task-id>/'], agentGuidance: buildManageTaskAgentHints({action})}, null, 2));
       return true;
     }
 
@@ -613,6 +616,7 @@ export async function executeKnowledgeCliCommand(
         action,
         outputMode,
         ...result,
+        artifacts: ['task.json', 'state.json', 'report.md', 'timeline.jsonl', 'runtime-evidence.jsonl'],
         agentGuidance: buildManageTaskAgentHints({action, taskId: result.leftTaskId, otherTaskId: result.rightTaskId}),
       }, null, 2));
       return true;
@@ -629,7 +633,7 @@ export async function executeKnowledgeCliCommand(
         currentSummary: args.taskSummary,
         nextStepHint: args.taskNextStep,
       });
-      writeLine(JSON.stringify({action, outputMode, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
+      writeLine(JSON.stringify({action, outputMode, ...result, artifacts: ['state.json', 'report.md'], agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
       return true;
     }
 
@@ -645,7 +649,7 @@ export async function executeKnowledgeCliCommand(
         result: args.timelineResult,
         next: args.timelineNext,
       });
-      writeLine(JSON.stringify({action, outputMode, ...result, agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
+      writeLine(JSON.stringify({action, outputMode, ...result, artifacts: ['timeline.jsonl', 'report.md'], agentGuidance: buildManageTaskAgentHints({action, taskId: result.taskId})}, null, 2));
       return true;
     }
 

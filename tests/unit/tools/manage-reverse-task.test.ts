@@ -69,14 +69,16 @@ describe('manage_reverse_task tool', () => {
       const listPayload = JSON.parse(listResponse.lines[1] ?? '{}') as {action: string; items: Array<{taskId: string}>};
       assert.strictEqual(listPayload.action, 'list');
       assert.strictEqual(listPayload.items[0]?.taskId, 'task-manage-001');
+      assert.ok(Array.isArray((listPayload as {artifacts?: string[]}).artifacts));
 
       const getResponse = makeResponse();
       await manageReverseTaskTool.handler({
         params: {action: 'get', taskId: 'task-manage-001'},
       }, getResponse as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]);
-      const getPayload = JSON.parse(getResponse.lines[1] ?? '{}') as {action: string; taskId: string};
+      const getPayload = JSON.parse(getResponse.lines[1] ?? '{}') as {action: string; taskId: string; artifacts?: string[]};
       assert.strictEqual(getPayload.action, 'get');
       assert.strictEqual(getPayload.taskId, 'task-manage-001');
+      assert.ok(getPayload.artifacts?.includes('task.json'));
 
       const progressResponse = makeResponse();
       await manageReverseTaskTool.handler({
@@ -119,9 +121,10 @@ describe('manage_reverse_task tool', () => {
       await manageReverseTaskTool.handler({
         params: {action: 'summarize', taskId: 'task-manage-001'},
       }, summarizeResponse as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]);
-      const summarizePayload = JSON.parse(summarizeResponse.lines[1] ?? '{}') as {action: string; taskId: string; reasoning: string[]};
+      const summarizePayload = JSON.parse(summarizeResponse.lines[1] ?? '{}') as {action: string; taskId: string; reasoning: string[]; artifacts?: string[]};
       assert.strictEqual(summarizePayload.action, 'summarize');
       assert.strictEqual(summarizePayload.taskId, 'task-manage-001');
+      assert.ok(summarizePayload.artifacts?.includes('report.md'));
 
       const state = JSON.parse(await readFile(path.join(rootDir, 'task-manage-001', 'state.json'), 'utf8')) as Record<string, unknown>;
       assert.strictEqual(state.currentStage, 'Patch');

@@ -139,6 +139,7 @@ For durable task artifacts and resumable work:
 - `manage_reverse_task`: aggregated reverse-task entry for reverse-task lifecycle and lookup flows
   - responses now include `agentGuidance` with `status / summary / recommendedNextAction / recommendedTool / recommendedParams / confidence / resumeHint`
   - `agentGuidance.recommendedStrategy` points the model to the next orchestration template directly
+  - responses also include `artifacts` so agent callers know which task files matter next
   - `outputMode: "compact" | "verbose"` is recommended for agent callers, especially on `get / summarize`
   - `action: "list"`
   - `action: "get"`
@@ -198,6 +199,7 @@ Bring browser evidence back to a local Node workflow.
 - `get_rebuild_health_report` — aggregates current stage, env blockers, first divergence, `patchSuggestions`, and `evidenceAggregates`
 - `get_rebuild_health_report` also supports `outputMode: "compact"` for lower-cost diagnostic loops
 - `agentGuidance` now also includes `recommendedStrategy` for direct follow-up orchestration
+- `fallbackPlan` now also exposes `recommendedStrategy` on orchestration failures
 - `manage_reverse_task`, `orchestrate_reverse_task`, and `get_rebuild_health_report` now expose a shared `agentGuidance` block so models can continue with less prompt-side interpretation
 - `record_reverse_evidence`: persist key hook / network / script observations into task artifacts so later summarize / progress / orchestration steps can reuse them. Summary/query responses now also expose deduped `evidenceAggregates` for top URLs, top functions, and env blockers.
 

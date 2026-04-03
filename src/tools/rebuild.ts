@@ -515,6 +515,7 @@ export const getRebuildHealthReport = defineTool({
       currentStage,
       status: agentHints.status === 'ok' ? status : agentHints.status,
       currentSummary,
+      artifacts: ['report.md', 'env/entry.js', 'env/env.js', 'env/polyfills.js', 'env/capture.json'],
       ...(outputMode === 'compact' ? {} : {
         evidenceAggregates: state.evidenceAggregates,
         firstDivergence: firstDivergence ?? null,

@@ -139,6 +139,7 @@
 - `manage_reverse_task`：聚合 task 相关常用动作，减少模型在多个 task tools 之间来回选择的 token 开销
   - 返回里会统一带 `agentGuidance`，包含 `status / summary / recommendedNextAction / recommendedTool / recommendedParams / confidence / resumeHint`
   - `agentGuidance.recommendedStrategy` 会直接提示下一轮更适合的 orchestration 模板
+  - 返回里也会统一带 `artifacts`，提示本轮主要读取/写入了哪些 task 产物
   - `outputMode: "compact" | "verbose"`：对大模型默认推荐 `compact`，尤其是 `get / summarize`
   - `action: "list"`：查看所有 task 的阶段、状态、下一步和最近更新时间
   - `action: "get"`：读取任务状态、目标上下文、最近 timeline 和 evidence 摘要
@@ -198,6 +199,7 @@
 - `get_rebuild_health_report`：聚合当前阶段、env blockers、首个 divergence、`patchSuggestions` 和 `evidenceAggregates`，用于补环境前先做一次体检。
 - `get_rebuild_health_report` 也支持 `outputMode: "compact"`，适合把它作为 orchestration 失败后的快速诊断输入。
 - 现在 `agentGuidance` 还会直接给出 `recommendedStrategy`，方便下一轮直接调用 `--orchestrateReverseTask <taskId> --strategy ...`
+- `orchestrate_reverse_task` 的失败返回里，`fallbackPlan` 现在也会带 `recommendedStrategy`
 - `manage_reverse_task` / `orchestrate_reverse_task` / `get_rebuild_health_report` 现在都补了统一的 `agentGuidance`，更适合大模型直接续推而不是先自己解释一遍结果。
 - `record_reverse_evidence`：把 hook / network / script 的关键观察正式写回 task artifact，供后续 summarize / progress / orchestration 复用。现在 summary/query 还会给出去重后的 `evidenceAggregates`，方便快速看 top URLs、top functions 和 env blockers。
 
