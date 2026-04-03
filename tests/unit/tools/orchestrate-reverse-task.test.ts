@@ -73,15 +73,17 @@ describe('orchestrate_reverse_task tool', () => {
       const payload = JSON.parse(response.lines[1] ?? '{}') as {
         ok: boolean;
         currentStage: string;
+        responseSummary?: string;
+        diagnostics?: Record<string, unknown>;
         orchestration: {primaryStep: {tool: string}; suggestedSteps: Array<{tool: string}>};
-        summary?: {taskId: string};
         agentGuidance?: {recommendedTool?: string; recommendedParams?: Record<string, unknown>; recommendedStrategy?: string; resumeHint?: string; confidence?: number};
       };
       assert.strictEqual(payload.ok, true);
       assert.strictEqual(payload.currentStage, 'Rebuild');
       assert.strictEqual(payload.orchestration.primaryStep.tool, 'export_rebuild_bundle');
       assert.strictEqual(payload.orchestration.suggestedSteps[0]?.tool, 'manage_reverse_task');
-      assert.strictEqual(payload.summary?.taskId, 'task-orchestrate-001');
+      assert.ok(payload.responseSummary);
+      assert.ok(payload.diagnostics);
       assert.strictEqual(payload.agentGuidance?.recommendedTool, 'export_rebuild_bundle');
       assert.strictEqual(payload.agentGuidance?.recommendedStrategy, 'rebuild-first');
       assert.deepStrictEqual(payload.agentGuidance?.recommendedParams, {taskId: 'task-orchestrate-001'});
@@ -423,10 +425,12 @@ describe('orchestrate_reverse_task tool', () => {
       }, compactResponse as unknown as Parameters<typeof orchestrateReverseTaskTool.handler>[1], {} as Parameters<typeof orchestrateReverseTaskTool.handler>[2]);
 
       const compactPayload = JSON.parse(compactResponse.lines[1] ?? '{}') as {
-        summary?: unknown;
+        responseSummary?: unknown;
+        diagnostics?: Record<string, unknown>;
         orchestration: {suggestedSteps: Array<{tool: string; reason?: string}>};
       };
-      assert.strictEqual(compactPayload.summary, undefined);
+      assert.ok(typeof compactPayload.responseSummary === 'string');
+      assert.ok(compactPayload.diagnostics);
       assert.ok(compactPayload.orchestration.suggestedSteps.every((step) => step.reason === undefined));
 
       const fallbackResponse = makeResponse();

@@ -37,6 +37,31 @@ function compactManagePayload(
   return payload;
 }
 
+function buildManageDiagnostics(action: string, outputMode: OutputMode, taskId?: string): Record<string, unknown> {
+  return {
+    responseStatus: 'ok',
+    action,
+    outputMode,
+    ...(taskId ? {taskId} : {}),
+  };
+}
+
+function buildManageSummary(action: string, payload: Record<string, unknown>): string {
+  if (action === 'list') {
+    return `已返回 ${(payload.items as unknown[] | undefined)?.length ?? 0} 个 reverse task。`;
+  }
+  if (action === 'search') {
+    return `已返回 ${(payload.items as unknown[] | undefined)?.length ?? 0} 个搜索命中。`;
+  }
+  if (action === 'get' || action === 'summarize') {
+    return `已返回任务 ${String(payload.taskId ?? '')} 的 ${action === 'get' ? '快照' : '摘要'}。`;
+  }
+  if (action === 'compare') {
+    return `已完成任务 ${String(payload.leftTaskId ?? '')} 与 ${String(payload.rightTaskId ?? '')} 的对比。`;
+  }
+  return `已完成 ${action} 动作。`;
+}
+
 export const manageReverseTaskTool = defineTool({
   name: 'manage_reverse_task',
   description: 'Unified reverse task entry for list/get/summarize/progress/update/timeline/archive/restore/search/tag/prune/compare actions. Preferred task-management entry to reduce tool-selection overhead.',
@@ -97,6 +122,8 @@ export const manageReverseTaskTool = defineTool({
     const writeJson = (payload: Record<string, unknown>) => {
       response.appendResponseLine('```json');
       response.appendResponseLine(JSON.stringify(compactManagePayload(action, {
+        responseSummary: buildManageSummary(action, payload),
+        diagnostics: buildManageDiagnostics(action, outputMode, typeof payload.taskId === 'string' ? payload.taskId : undefined),
         ...payload,
         outputMode,
       }, outputMode), null, 2));

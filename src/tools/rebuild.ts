@@ -512,6 +512,13 @@ export const getRebuildHealthReport = defineTool({
     response.appendResponseLine(JSON.stringify({
       taskId: request.params.taskId,
       outputMode,
+      responseSummary: `已生成任务 ${request.params.taskId} 的 rebuild health report。`,
+      diagnostics: {
+        responseStatus: 'ok',
+        outputMode,
+        taskId: request.params.taskId,
+        hasPatchSuggestions: analyzed.patchSuggestions.length > 0,
+      },
       currentStage,
       status: agentHints.status === 'ok' ? status : agentHints.status,
       currentSummary,

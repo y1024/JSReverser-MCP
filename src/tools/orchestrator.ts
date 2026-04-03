@@ -46,6 +46,16 @@ export const orchestrateReverseTaskTool = defineTool({
     response.appendResponseLine('```json');
     response.appendResponseLine(JSON.stringify({
       ok: true,
+      responseSummary: request.params.outputMode === 'compact'
+        ? `已生成任务 ${result.taskId} 的 compact orchestration plan。`
+        : `已生成任务 ${result.taskId} 的 orchestration plan。`,
+      diagnostics: {
+        responseStatus: 'ok',
+        outputMode: result.outputMode,
+        taskId: result.taskId,
+        hasFallbackPlan: Boolean(result.fallbackPlan),
+        executed: Boolean(result.execution?.executed),
+      },
       ...result,
       agentGuidance: buildOrchestrationAgentHints({
         taskId: result.taskId,

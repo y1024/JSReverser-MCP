@@ -66,27 +66,33 @@ describe('manage_reverse_task tool', () => {
       await manageReverseTaskTool.handler({
         params: {action: 'list'},
       }, listResponse as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]);
-      const listPayload = JSON.parse(listResponse.lines[1] ?? '{}') as {action: string; items: Array<{taskId: string}>};
+      const listPayload = JSON.parse(listResponse.lines[1] ?? '{}') as {action: string; items: Array<{taskId: string}>; responseSummary?: string; diagnostics?: Record<string, unknown>};
       assert.strictEqual(listPayload.action, 'list');
       assert.strictEqual(listPayload.items[0]?.taskId, 'task-manage-001');
       assert.ok(Array.isArray((listPayload as {artifacts?: string[]}).artifacts));
+      assert.ok(typeof listPayload.responseSummary === 'string');
+      assert.ok(listPayload.diagnostics);
 
       const getResponse = makeResponse();
       await manageReverseTaskTool.handler({
         params: {action: 'get', taskId: 'task-manage-001'},
       }, getResponse as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]);
-      const getPayload = JSON.parse(getResponse.lines[1] ?? '{}') as {action: string; taskId: string; artifacts?: string[]};
+      const getPayload = JSON.parse(getResponse.lines[1] ?? '{}') as {action: string; taskId: string; artifacts?: string[]; responseSummary?: string; diagnostics?: Record<string, unknown>};
       assert.strictEqual(getPayload.action, 'get');
       assert.strictEqual(getPayload.taskId, 'task-manage-001');
       assert.ok(getPayload.artifacts?.includes('task.json'));
+      assert.ok(typeof getPayload.responseSummary === 'string');
+      assert.ok(getPayload.diagnostics);
 
       const progressResponse = makeResponse();
       await manageReverseTaskTool.handler({
         params: {action: 'progress', taskId: 'task-manage-001'},
       }, progressResponse as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]);
-      const progressPayload = JSON.parse(progressResponse.lines[1] ?? '{}') as {action: string; currentStage: string};
+      const progressPayload = JSON.parse(progressResponse.lines[1] ?? '{}') as {action: string; currentStage: string; responseSummary?: string; diagnostics?: Record<string, unknown>};
       assert.strictEqual(progressPayload.action, 'progress');
       assert.strictEqual(progressPayload.currentStage, 'Rebuild');
+      assert.ok(typeof progressPayload.responseSummary === 'string');
+      assert.ok(progressPayload.diagnostics);
 
       const updateResponse = makeResponse();
       await manageReverseTaskTool.handler({
@@ -121,10 +127,12 @@ describe('manage_reverse_task tool', () => {
       await manageReverseTaskTool.handler({
         params: {action: 'summarize', taskId: 'task-manage-001'},
       }, summarizeResponse as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]);
-      const summarizePayload = JSON.parse(summarizeResponse.lines[1] ?? '{}') as {action: string; taskId: string; reasoning: string[]; artifacts?: string[]};
+      const summarizePayload = JSON.parse(summarizeResponse.lines[1] ?? '{}') as {action: string; taskId: string; reasoning: string[]; artifacts?: string[]; responseSummary?: string; diagnostics?: Record<string, unknown>};
       assert.strictEqual(summarizePayload.action, 'summarize');
       assert.strictEqual(summarizePayload.taskId, 'task-manage-001');
       assert.ok(summarizePayload.artifacts?.includes('report.md'));
+      assert.ok(typeof summarizePayload.responseSummary === 'string');
+      assert.ok(summarizePayload.diagnostics);
 
       const state = JSON.parse(await readFile(path.join(rootDir, 'task-manage-001', 'state.json'), 'utf8')) as Record<string, unknown>;
       assert.strictEqual(state.currentStage, 'Patch');

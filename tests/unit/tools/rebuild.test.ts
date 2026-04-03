@@ -169,6 +169,8 @@ describe('rebuild bridge tools', () => {
       assert.strictEqual(payload.status, 'active');
       assert.strictEqual(payload.currentSummary, 'ReferenceError: window is not defined');
       assert.ok((payload.artifacts as string[]).includes('report.md'));
+      assert.ok(typeof payload.responseSummary === 'string');
+      assert.ok(payload.diagnostics);
       assert.deepStrictEqual(payload.missingCapabilities, ['window']);
       assert.ok(Array.isArray(payload.patchSuggestions));
       assert.ok((payload.patchSuggestions as Array<Record<string, unknown>>).some((item) => item.capability === 'window'));
@@ -223,6 +225,8 @@ describe('rebuild bridge tools', () => {
       assert.strictEqual(payload.outputMode, 'compact');
       assert.strictEqual(payload.evidenceAggregates, undefined);
       assert.strictEqual(payload.firstDivergence, undefined);
+      assert.ok(typeof payload.responseSummary === 'string');
+      assert.ok(payload.diagnostics);
       assert.deepStrictEqual(payload.missingCapabilities, ['window']);
       assert.ok(payload.agentGuidance);
     } finally {
