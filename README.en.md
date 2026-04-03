@@ -205,6 +205,7 @@ Bring browser evidence back to a local Node workflow.
 - These three tools now also expose shared top-level `responseSummary` and `diagnostics` fields; `responseSummary` is reserved for agent-facing continuation hints without overwriting business-level `summary` objects.
 - They also expose shared continuation fields: `outcome`, `shouldResume`, `shouldSwitchStrategy`, `nextBestTool`, and `nextBestParams`.
 - They also expose a shared `continuation` object: `{ ready, reason, tool, params, strategy, resumeCommand }`.
+- `continuation` now also exposes `invoke: { tool, params }` so agents can execute the next hop directly.
 - They now also expose a shared failure contract: `errorCode`, `errorType`, `retryable`, `blockedBy`, plus `detailLevel` and `continuation.actionKey`.
 - `compact` mode is now slimmer: it keeps `responseSummary`, `diagnostics`, critical status fields, and `continuation`, while trimming redundant next-step blocks and switching `detailLevel` to `minimal`.
 - A shared top-level `routeGuard` is also exposed with `preferredToolClass / routeHint / avoidTools` for routing decisions.

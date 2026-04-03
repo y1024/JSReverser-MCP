@@ -81,7 +81,7 @@ describe('orchestrate_reverse_task tool', () => {
         nextBestTool?: string;
         detailLevel?: string;
         routeGuard?: {preferredToolClass?: string; routeHint?: string; avoidTools?: string[]};
-        continuation?: {ready?: boolean; tool?: string; strategy?: string; toolClass?: string; routeHint?: string};
+        continuation?: {ready?: boolean; tool?: string; strategy?: string; toolClass?: string; routeHint?: string; invoke?: {tool?: string; params?: Record<string, unknown>}};
         orchestration: {primaryStep: {tool: string}; suggestedSteps: Array<{tool: string}>};
         agentGuidance?: {recommendedTool?: string; recommendedParams?: Record<string, unknown>; recommendedStrategy?: string; resumeHint?: string; confidence?: number; toolClass?: string; routeHint?: string};
       };
@@ -101,6 +101,8 @@ describe('orchestrate_reverse_task tool', () => {
       assert.strictEqual(payload.continuation?.ready, true);
       assert.strictEqual(payload.continuation?.tool, 'export_rebuild_bundle');
       assert.strictEqual(payload.continuation?.strategy, 'rebuild-first');
+      assert.strictEqual(payload.continuation?.invoke?.tool, 'export_rebuild_bundle');
+      assert.deepStrictEqual(payload.continuation?.invoke?.params, {taskId: 'task-orchestrate-001'});
       assert.strictEqual(payload.continuation?.toolClass, 'rebuild');
       assert.strictEqual(payload.continuation?.routeHint, 'switch_to_rebuild');
       assert.strictEqual(payload.agentGuidance?.recommendedTool, 'export_rebuild_bundle');
@@ -492,7 +494,7 @@ describe('orchestrate_reverse_task tool', () => {
         nextBestTool?: string;
         detailLevel?: string;
         routeGuard?: {preferredToolClass?: string; routeHint?: string};
-        continuation?: {ready?: boolean; tool?: string; strategy?: string; actionKey?: string; toolClass?: string; routeHint?: string};
+        continuation?: {ready?: boolean; tool?: string; strategy?: string; actionKey?: string; toolClass?: string; routeHint?: string; invoke?: {tool?: string; params?: Record<string, unknown>}};
         agentGuidance?: {recommendedStrategy?: string; toolClass?: string; routeHint?: string};
         fallbackPlan?: {reason: string; recommendedStrategy?: string; steps: Array<{tool: string}>};
       };
@@ -507,6 +509,7 @@ describe('orchestrate_reverse_task tool', () => {
       assert.strictEqual(fallbackPayload.continuation?.tool, 'diff_env_requirements');
       assert.strictEqual(fallbackPayload.continuation?.strategy, 'env-fix');
       assert.strictEqual(fallbackPayload.continuation?.actionKey, 'diff_env_requirements');
+      assert.strictEqual(fallbackPayload.continuation?.invoke?.tool, 'diff_env_requirements');
       assert.strictEqual(fallbackPayload.continuation?.toolClass, 'task');
       assert.strictEqual(fallbackPayload.continuation?.routeHint, 'stay_on_task_flow');
       assert.strictEqual(fallbackPayload.agentGuidance?.recommendedStrategy, 'env-fix');

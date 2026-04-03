@@ -160,6 +160,7 @@
 - 这几个 agent-first 工具还会统一返回 `responseSummary` / `diagnostics`，方便模型低 token 判断“这次调用做成了什么、下一轮是否继续”
 - 同时也会统一返回 `outcome` / `shouldResume` / `shouldSwitchStrategy` / `nextBestTool` / `nextBestParams`
 - 更进一步时，可直接读取统一的 `continuation.ready / continuation.tool / continuation.params / continuation.strategy / continuation.resumeCommand`
+- 如果不想自己重新拼 tool 调用，直接取 `continuation.invoke.tool / continuation.invoke.params`
 - 如果是失败/阻塞路径，还可以直接读 `errorType / retryable / blockedBy / continuation.actionKey / detailLevel`
 - 如果想先做工具路由，再执行调用，可优先读 `routeGuard.preferredToolClass / routeGuard.routeHint / routeGuard.avoidTools`
 

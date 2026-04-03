@@ -91,7 +91,7 @@ describe('doctor cli', () => {
       const progressLines: string[] = [];
       const progressHandled = await executeKnowledgeCliCommand({manageReverseTask: 'progress', taskId: 'task-cli-001'}, (line) => progressLines.push(line));
       assert.strictEqual(progressHandled, true);
-      const progressPayload = JSON.parse(progressLines[0]) as {action: string; currentStage: string; nextStepHint: string; reasoning: string[]; outcome?: string; shouldResume?: boolean; nextBestTool?: string; detailLevel?: string; routeGuard?: {preferredToolClass?: string; routeHint?: string}; continuation?: {tool?: string; ready?: boolean; actionKey?: string; toolClass?: string; routeHint?: string}; agentGuidance?: {recommendedTool?: string; recommendedStrategy?: string; toolClass?: string; routeHint?: string}};
+      const progressPayload = JSON.parse(progressLines[0]) as {action: string; currentStage: string; nextStepHint: string; reasoning: string[]; outcome?: string; shouldResume?: boolean; nextBestTool?: string; detailLevel?: string; routeGuard?: {preferredToolClass?: string; routeHint?: string}; continuation?: {tool?: string; ready?: boolean; actionKey?: string; toolClass?: string; routeHint?: string; invoke?: {tool?: string; params?: Record<string, unknown>}}; agentGuidance?: {recommendedTool?: string; recommendedStrategy?: string; toolClass?: string; routeHint?: string}};
       assert.strictEqual(progressPayload.action, 'progress');
       assert.strictEqual(progressPayload.currentStage, 'Rebuild');
       assert.strictEqual(progressPayload.nextStepHint, 'export_rebuild_bundle');
@@ -105,6 +105,8 @@ describe('doctor cli', () => {
       assert.strictEqual(progressPayload.continuation?.ready, true);
       assert.strictEqual(progressPayload.continuation?.tool, 'export_rebuild_bundle');
       assert.strictEqual(progressPayload.continuation?.actionKey, 'export_rebuild_bundle');
+      assert.strictEqual(progressPayload.continuation?.invoke?.tool, 'export_rebuild_bundle');
+      assert.deepStrictEqual(progressPayload.continuation?.invoke?.params, {taskId: 'task-cli-001'});
       assert.strictEqual(progressPayload.continuation?.toolClass, 'rebuild');
       assert.strictEqual(progressPayload.continuation?.routeHint, 'switch_to_rebuild');
       assert.strictEqual(progressPayload.agentGuidance?.recommendedTool, 'export_rebuild_bundle');

@@ -6,6 +6,10 @@ export interface ContinuationShape {
   reason: string;
   tool?: string;
   params?: Record<string, unknown>;
+  invoke?: {
+    tool: string;
+    params?: Record<string, unknown>;
+  };
   toolClass?: 'task' | 'orchestration' | 'rebuild' | 'analysis';
   routeHint?: 'stay_on_task_flow' | 'switch_to_orchestration' | 'switch_to_rebuild' | 'switch_to_analysis';
   strategy?: string;
@@ -167,6 +171,7 @@ export function buildManageContinuation(
       reason: hints?.summary ?? fallbackReason,
       ...(nextBestTool ? {tool: nextBestTool, actionKey: nextBestTool} : {}),
       ...(nextBestParams ? {params: nextBestParams} : {}),
+      ...(nextBestTool ? {invoke: {tool: nextBestTool, ...(nextBestParams ? {params: nextBestParams} : {})}} : {}),
       ...(hints?.toolClass ? {toolClass: hints.toolClass} : {}),
       ...(hints?.routeHint ? {routeHint: hints.routeHint} : {}),
       ...(hints?.recommendedStrategy ? {strategy: hints.recommendedStrategy} : {}),
@@ -212,6 +217,7 @@ export function buildOrchestrationContinuation(input: {
       reason: input.agentGuidance?.summary ?? '已生成下一步编排建议。',
       ...(nextBestTool ? {tool: nextBestTool, actionKey: nextBestTool} : {}),
       ...(nextBestParams ? {params: nextBestParams} : {}),
+      ...(nextBestTool ? {invoke: {tool: nextBestTool, ...(nextBestParams ? {params: nextBestParams} : {})}} : {}),
       ...(input.agentGuidance?.toolClass ? {toolClass: input.agentGuidance.toolClass} : {}),
       ...(input.agentGuidance?.routeHint ? {routeHint: input.agentGuidance.routeHint} : {}),
       ...(strategy ? {strategy} : {}),
@@ -255,6 +261,7 @@ export function buildRebuildContinuation(input: {
       reason: input.agentGuidance.summary,
       ...(nextBestTool ? {tool: nextBestTool, actionKey: nextBestTool} : {}),
       ...(nextBestParams ? {params: nextBestParams} : {}),
+      ...(nextBestTool ? {invoke: {tool: nextBestTool, ...(nextBestParams ? {params: nextBestParams} : {})}} : {}),
       ...(input.agentGuidance.toolClass ? {toolClass: input.agentGuidance.toolClass} : {}),
       ...(input.agentGuidance.routeHint ? {routeHint: input.agentGuidance.routeHint} : {}),
       ...(input.agentGuidance.recommendedStrategy ? {strategy: input.agentGuidance.recommendedStrategy} : {}),

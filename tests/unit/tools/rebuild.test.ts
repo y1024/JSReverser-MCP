@@ -179,9 +179,14 @@ describe('rebuild bridge tools', () => {
       const routeGuard = payload.routeGuard as {preferredToolClass?: string; routeHint?: string} | undefined;
       assert.strictEqual(routeGuard?.preferredToolClass, 'rebuild');
       assert.strictEqual(routeGuard?.routeHint, 'switch_to_rebuild');
-      const continuation = payload.continuation as {ready?: boolean; tool?: string; toolClass?: string; routeHint?: string} | undefined;
+      const continuation = payload.continuation as {ready?: boolean; tool?: string; toolClass?: string; routeHint?: string; invoke?: {tool?: string; params?: Record<string, unknown>}} | undefined;
       assert.strictEqual(continuation?.ready, true);
       assert.strictEqual(continuation?.tool, 'diff_env_requirements');
+      assert.strictEqual(continuation?.invoke?.tool, 'diff_env_requirements');
+      assert.deepStrictEqual(continuation?.invoke?.params, {
+        runtimeError: 'ReferenceError: window is not defined',
+        observedCapabilities: ['window', 'document', 'crypto'],
+      });
       assert.strictEqual(continuation?.toolClass, 'rebuild');
       assert.strictEqual(continuation?.routeHint, 'switch_to_rebuild');
       assert.deepStrictEqual(payload.missingCapabilities, ['window']);
@@ -244,8 +249,9 @@ describe('rebuild bridge tools', () => {
       assert.strictEqual(payload.shouldResume, false);
       assert.strictEqual(payload.detailLevel, 'minimal');
       assert.strictEqual(payload.nextBestTool, undefined);
-      const compactContinuation = payload.continuation as {tool?: string} | undefined;
+      const compactContinuation = payload.continuation as {tool?: string; invoke?: {tool?: string}} | undefined;
       assert.strictEqual(compactContinuation?.tool, 'diff_env_requirements');
+      assert.strictEqual(compactContinuation?.invoke?.tool, 'diff_env_requirements');
       assert.deepStrictEqual(payload.missingCapabilities, ['window']);
       assert.strictEqual(payload.agentGuidance, undefined);
     } finally {
