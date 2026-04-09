@@ -533,15 +533,17 @@ describe('doctor cli', () => {
       const handled = await executeKnowledgeCliCommand({
         runReverseAgent: 'task-cli-run-agent-001',
         maxRounds: 2,
+        goalMode: 'port-ready',
         outputMode: 'compact',
         includeSummary: false,
       }, (line) => lines.push(line));
       assert.strictEqual(handled, true);
       const payload = JSON.parse(lines[0]) as {
-        run?: {stopReason?: string};
+        run?: {stopReason?: string; goalMode?: string};
         outputMode?: string;
       };
       assert.strictEqual(payload.run?.stopReason, 'pure_extraction_ready');
+      assert.strictEqual(payload.run?.goalMode, 'port-ready');
       assert.strictEqual(payload.outputMode, 'compact');
     } finally {
       runtime.analyzer.understand = originals.analyzerUnderstand;

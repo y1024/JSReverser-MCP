@@ -1,4 +1,4 @@
-import {mkdir, readFile, writeFile} from 'node:fs/promises';
+import {access, mkdir, readFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 
 import {getReverseTaskState} from '../reverse/ReverseTaskQuery.js';
@@ -23,6 +23,7 @@ import {defineTool} from './ToolDefinition.js';
 import {getJSHookRuntime} from './runtime.js';
 
 type AgentToolContext = Parameters<typeof searchInSources.handler>[2];
+type ReverseAgentGoalMode = 'signature-only' | 'pure-draft' | 'port-ready';
 
 function makeToolResponse() {
   return {
@@ -85,6 +86,7 @@ async function executeRoundStep(
   step: {tool: string; params: Record<string, unknown>},
   taskId: string,
   context: AgentToolContext,
+  goalMode: ReverseAgentGoalMode,
 ): Promise<Record<string, unknown> | undefined> {
   const response = makeToolResponse();
   const taskMeta = await readTaskDescriptor(taskId);
@@ -184,19 +186,23 @@ async function executeRoundStep(
     const functionSlice = await runtime.reverseTaskStore.readSnapshot<Record<string, unknown>>(taskId, 'function-slice.json');
     await task.writeSnapshot('pure-extraction.json', {
       stage: 'PureExtraction',
+      goalMode,
       mainFunction: functionSlice?.mainFunction ?? 'unknown',
       scriptId: functionSlice?.scriptId,
       scriptUrl: functionSlice?.scriptUrl,
       boundary: {
         explicitInputsRequired: 'pending fixture freeze',
         runtimeOnlyState: 'pending manual confirmation',
-        pureImplementationStatus: 'ready-to-start',
+        pureImplementationStatus: goalMode === 'port-ready' ? 'ready-for-port-boundary' : 'ready-to-start',
+        portBoundary: goalMode === 'port-ready'
+          ? 'stabilize output contract before cross-runtime port'
+          : 'optional',
       },
       derivedFrom: ['understand-code.json', 'deobfuscate-code.json', 'function-slice.json'],
       nextRecommendedFiles: ['run/fixtures.json', 'run/pure-main.js'],
       persistedAt: Date.now(),
     });
-    await materializePureExtractionDrafts(taskId);
+    await materializePureExtractionDrafts(taskId, goalMode);
     await task.appendLog('runtime-evidence', {
       source: 'deobfuscate_code',
       kind: 'deobfuscate-code',
@@ -205,7 +211,9 @@ async function executeRoundStep(
     await task.appendLog('runtime-evidence', {
       source: 'run_reverse_agent',
       kind: 'pure-draft',
-      note: 'generated run/fixtures.json and run/pure-main.js skeletons',
+      note: goalMode === 'port-ready'
+        ? 'generated port-ready pure drafts with explicit output contract'
+        : 'generated run/fixtures.json and run/pure-main.js skeletons',
     });
     await updateReverseTaskState(runtime.reverseTaskStore, {
       taskId,
@@ -248,7 +256,21 @@ async function readCaptureSnapshot(taskId: string): Promise<Record<string, unkno
   }
 }
 
-async function materializePureExtractionDrafts(taskId: string): Promise<void> {
+async function listExistingArtifacts(taskId: string, candidates: string[]): Promise<string[]> {
+  const runtime = getJSHookRuntime();
+  const taskDir = runtime.reverseTaskStore.getTaskDir(taskId);
+  const resolved = await Promise.all(candidates.map(async (artifactPath) => {
+    try {
+      await access(path.join(taskDir, artifactPath));
+      return artifactPath;
+    } catch {
+      return undefined;
+    }
+  }));
+  return resolved.filter((value): value is string => typeof value === 'string');
+}
+
+async function materializePureExtractionDrafts(taskId: string, goalMode: ReverseAgentGoalMode): Promise<void> {
   const runtime = getJSHookRuntime();
   const runDir = path.join(runtime.reverseTaskStore.getTaskDir(taskId), 'run');
   await mkdir(runDir, {recursive: true});
@@ -318,12 +340,15 @@ async function materializePureExtractionDrafts(taskId: string): Promise<void> {
     version: 1,
     generatedBy: 'run_reverse_agent',
     stage: 'PureExtraction',
+    goalMode,
     mainFunction,
     scriptUrl,
     boundary: {
       explicitInputsRequired: ['TODO'],
       runtimeContext: ['TODO'],
-      expectedOutput: 'TODO',
+      expectedOutput: goalMode === 'port-ready'
+        ? 'signature string + intermediates contract'
+        : 'TODO',
     },
     samples: [
       {
@@ -347,6 +372,7 @@ async function materializePureExtractionDrafts(taskId: string): Promise<void> {
  */
 
 export const PURE_STAGE = 'PureExtraction';
+export const GOAL_MODE = ${JSON.stringify(goalMode)};
 export const MAIN_FUNCTION = ${JSON.stringify(mainFunction)};
 export const SOURCE_SCRIPT_URL = ${JSON.stringify(scriptUrl)};
 export const FIXTURE_PATH = './fixtures.json';
@@ -359,12 +385,18 @@ export const FIXTURE_PATH = './fixtures.json';
  * ${JSON.stringify(deobfuscateAnalysis)}
  */
 export function ${mainFunction}(input, runtimeContext = {}) {
-  void runtimeContext;
   // TODO: keep only explicit algorithm inputs here.
   // TODO: remove remaining environment-derived fields after fixture verification.
   return {
+    ok: false,
+    mode: GOAL_MODE,
+    stage: PURE_STAGE,
+    mainFunction: MAIN_FUNCTION,
     input,
-    note: 'auto-generated pure skeleton',
+    runtimeContext,
+    signature: null,
+    intermediates: {},
+    warnings: ['TODO: replace draft implementation with verified pure algorithm'],
   };
 }
 
@@ -379,7 +411,7 @@ if (import.meta.url === \`file://\${process.argv[1]}\`) {
   const fixtureArg = process.argv[2];
   const fixture = fixtureArg ? JSON.parse(fixtureArg) : {input: {}, runtimeContext: {}};
   const result = runFixture(fixture);
-  console.log(JSON.stringify({ok: true, result}, null, 2));
+  console.log(JSON.stringify({ok: true, goalMode: GOAL_MODE, result}, null, 2));
 }
 `;
 
@@ -395,6 +427,8 @@ test('runs first auto-generated fixture', async () => {
   assert.ok(fixture, 'expected at least one fixture sample');
   const result = runFixture(fixture);
   assert.ok(result && typeof result === 'object');
+  assert.strictEqual(result.ok, false);
+  assert.strictEqual(result.mainFunction, fixtures.mainFunction);
 });
 `;
 
@@ -405,12 +439,18 @@ test('runs first auto-generated fixture', async () => {
   ]);
 }
 
-function shouldStopAfterRound(result: ReverseAgentRunResult['lastOrchestration']): ReverseAgentStopReason | undefined {
+function shouldStopAfterRound(
+  result: ReverseAgentRunResult['lastOrchestration'],
+  goalMode: ReverseAgentGoalMode,
+): ReverseAgentStopReason | undefined {
   if (result.execution?.failedStep) {
     return result.execution.recovery?.shouldResume ? 'checkpoint_required' : 'blocked';
   }
   if (result.status === 'pass') {
     return 'task_passed';
+  }
+  if (goalMode === 'signature-only' && result.orchestration.primaryStep.tool === 'extract_function_tree') {
+    return 'analysis_completed';
   }
   if (result.orchestration.primaryStep.tool === 'understand_code') {
     return 'pure_extraction_ready';
@@ -426,6 +466,7 @@ export const runReverseAgentTool = defineTool({
     taskId: zod.string().min(1),
     maxRounds: zod.number().int().positive().max(20).optional().default(6),
     strategy: zod.enum(['observe-first', 'rebuild-first', 'env-fix', 'artifact-sync', 'evidence-only']).optional(),
+    goalMode: zod.enum(['signature-only', 'pure-draft', 'port-ready']).optional().default('pure-draft'),
     outputMode: zod.enum(['compact', 'verbose']).optional().default('verbose'),
     includeSummary: zod.boolean().optional().default(true),
   },
@@ -436,6 +477,7 @@ export const runReverseAgentTool = defineTool({
     let lastResult: Awaited<ReturnType<typeof orchestrateReverseTask>> | undefined;
     let stopReason: ReverseAgentStopReason = 'max_rounds';
 
+    const goalMode = request.params.goalMode ?? 'pure-draft';
     for (let round = 1; round <= (request.params.maxRounds ?? 6); round++) {
       const result = await orchestrateReverseTask(runtime.reverseTaskStore, request.params.taskId, {
         persistState: true,
@@ -467,7 +509,7 @@ export const runReverseAgentTool = defineTool({
 
       try {
         for (const step of result.orchestration.suggestedSteps) {
-          await executeRoundStep(step, request.params.taskId, context);
+          await executeRoundStep(step, request.params.taskId, context, goalMode);
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -510,7 +552,27 @@ export const runReverseAgentTool = defineTool({
         completedStepCount: result.orchestration.suggestedSteps.length,
       });
 
-      const stop = shouldStopAfterRound(result);
+      if (goalMode === 'signature-only') {
+        const signatureArtifacts = await listExistingArtifacts(request.params.taskId, ['function-slice.json']);
+        if (signatureArtifacts.length > 0) {
+          stopReason = 'analysis_completed';
+          await markReverseAgentStop(
+            runtime.reverseTaskStore,
+            request.params.taskId,
+            String(postState.state?.currentStage ?? result.currentStage),
+            stopReason,
+            {
+              round,
+              primaryTool: result.orchestration.primaryStep.tool,
+              nextStepHint: String(postState.state?.nextStepHint ?? result.nextStepHint),
+              status: String(postState.state?.status ?? result.status),
+            },
+          );
+          break;
+        }
+      }
+
+      const stop = shouldStopAfterRound(result, goalMode);
       if (stop) {
         stopReason = stop;
         await markReverseAgentStop(runtime.reverseTaskStore, request.params.taskId, String(postState.state?.currentStage ?? result.currentStage), stop, {
@@ -541,14 +603,19 @@ export const runReverseAgentTool = defineTool({
       timelineLimit: 20,
       evidenceLimit: 20,
     });
-    const generatedArtifacts = [
-      'understand-code.json',
-      'deobfuscate-code.json',
-      'pure-extraction.json',
-      'run/fixtures.json',
-      'run/pure-main.js',
-      'run/pure-selftest.test.mjs',
-    ];
+    const generatedArtifacts = await listExistingArtifacts(
+      request.params.taskId,
+      goalMode === 'signature-only'
+        ? ['function-slice.json']
+        : [
+          'understand-code.json',
+          'deobfuscate-code.json',
+          'pure-extraction.json',
+          'run/fixtures.json',
+          'run/pure-main.js',
+          'run/pure-selftest.test.mjs',
+        ],
+    );
     const agentGuidance = buildRunReverseAgentHints({
       taskId: request.params.taskId,
       stopReason,
@@ -566,6 +633,7 @@ export const runReverseAgentTool = defineTool({
         taskId: request.params.taskId,
         roundsExecuted: rounds.length,
         stopReason,
+        goalMode,
       },
       ...buildOrchestrationContinuation({
         shouldResume: stopReason === 'checkpoint_required',
@@ -580,6 +648,7 @@ export const runReverseAgentTool = defineTool({
         roundsExecuted: rounds.length,
         maxRounds: request.params.maxRounds ?? 6,
         stopReason,
+        goalMode,
         rounds,
       },
       currentStage: String(finalState.state?.currentStage ?? lastResult.currentStage),

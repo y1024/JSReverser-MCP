@@ -821,7 +821,7 @@ so returned values have to JSON-serializable.
 
 ### `run_reverse_agent`
 
-**Description:** One-shot reverse agent entry that repeatedly advances the reverse main chain and, when reaching `PureExtraction`, scaffolds `run/fixtures.json`, `run/pure-main.js`, and `run/pure-selftest.test.mjs`.
+**Description:** One-shot reverse agent entry that repeatedly advances the reverse main chain. It supports `goalMode` to stop at function-slice only, generate normal PureExtraction drafts, or generate a more explicit port-ready return contract draft.
 
 **Response note:** Returns the same agent-facing continuation fields as orchestration tools, plus a `run` block describing `roundsExecuted`, `stopReason`, and each round's `primaryTool`. Also returns `generatedArtifacts` so external agent/client can directly read the newly scaffolded task-local files.
 
@@ -830,8 +830,15 @@ so returned values have to JSON-serializable.
 - `taskId`
 - `maxRounds`
 - `strategy`
+- `goalMode`
 - `outputMode`
 - `includeSummary`
+
+**Goal modes:**
+
+- `signature-only`
+- `pure-draft`
+- `port-ready`
 
 **Typical stop reasons:**
 
@@ -858,7 +865,8 @@ so returned values have to JSON-serializable.
   ],
   "run": {
     "roundsExecuted": 4,
-    "stopReason": "pure_extraction_ready"
+    "stopReason": "pure_extraction_ready",
+    "goalMode": "pure-draft"
   },
   "continuation": {
     "invoke": {

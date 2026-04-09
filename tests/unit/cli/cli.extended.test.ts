@@ -27,6 +27,7 @@ interface ParsedArgsLike {
   orchestrateReverseTask?: string;
   runReverseAgent?: string;
   maxRounds?: number;
+  goalMode?: string;
   execute?: boolean;
   resume?: boolean;
   stopOnError?: boolean;
@@ -207,6 +208,8 @@ describe('cli extended coverage', () => {
       'task-77',
       '--maxRounds',
       '4',
+      '--goalMode',
+      'port-ready',
       '--strategy',
       'evidence-only',
       '--outputMode',
@@ -216,6 +219,7 @@ describe('cli extended coverage', () => {
 
     assert.strictEqual(parsed.runReverseAgent, 'task-77');
     assert.strictEqual(parsed.maxRounds, 4);
+    assert.strictEqual(parsed.goalMode, 'port-ready');
     assert.strictEqual(parsed.strategy, 'evidence-only');
     assert.strictEqual(parsed.outputMode, 'compact');
     assert.strictEqual(parsed.includeSummary, false);

@@ -157,7 +157,11 @@
 - `orchestrate_reverse_task`：高层自动编排入口；默认先同步 task 状态并生成执行序列，也支持 `execute=true` 直接串行执行、写回 checkpoint，并在 `resume=true` 时从上次失败步骤续跑；失败时会返回 recovery 建议，还支持 `skipSteps` / `fromStep` / `onlySteps` 做步骤级控制，也支持通过 `strategy` 快速切到 `observe-first` / `rebuild-first` / `env-fix` / `artifact-sync` / `evidence-only` 模板
   - `outputMode: "compact" | "verbose"`：给大模型时可优先用 `compact`，减少非必要字段和说明文字
   - 执行失败时会补 `fallbackPlan`，帮助模型直接切换到下一条更稳的链路
-- `run_reverse_agent`：一键 reverse agent 入口；会自动串起 `locate_signature_function -> search_in_sources -> extract_function_tree -> understand_code -> deobfuscate_code`，并在进入 `PureExtraction` 时自动落 `run/fixtures.json`、`run/pure-main.js`、`run/pure-selftest.test.mjs`
+- `run_reverse_agent`：一键 reverse agent 入口；会自动串起 `locate_signature_function -> search_in_sources -> extract_function_tree -> understand_code -> deobfuscate_code`
+  - `goalMode: "signature-only" | "pure-draft" | "port-ready"`：控制自动流停在哪一层
+    - `signature-only`：停在最小函数切片，适合先只拿 `function-slice.json`
+    - `pure-draft`：默认模式，进入 `PureExtraction` 并自动落 `run/fixtures.json`、`run/pure-main.js`、`run/pure-selftest.test.mjs`
+    - `port-ready`：和 `pure-draft` 一样生成草稿，但会把返回契约写得更明确，方便后续跨 runtime port
   - 返回里会补 `generatedArtifacts`，方便外部 agent / client 直接读取本轮新生成的 task-local 文件
 - CLI 也统一成一个 task 入口：
   - `--manageReverseTask list`
@@ -176,7 +180,9 @@
   - `--orchestrateReverseTask <taskId> --execute --stopOnError=false`
   - `--orchestrateReverseTask <taskId> --execute --executionOverrides '{"inject_hook":{"status":"ok","result":"done"}}'`
   - `--runReverseAgent <taskId>`
+  - `--runReverseAgent <taskId> --goalMode signature-only`
   - `--runReverseAgent <taskId> --maxRounds 4 --outputMode compact`
+  - `--runReverseAgent <taskId> --goalMode port-ready --outputMode compact`
 - 自动化编排的 checkpoint、CLI cheatsheet、失败分类对照表、`codex --resume` 协同方式见 [docs/guides/reverse-task-orchestration.md](docs/guides/reverse-task-orchestration.md)
 
 说明：

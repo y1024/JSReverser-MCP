@@ -41,6 +41,11 @@ export const cliOptions = {
     type: 'number',
     description: 'When used with --runReverseAgent, maximum orchestration rounds to execute.',
   },
+  goalMode: {
+    type: 'string',
+    choices: ['signature-only', 'pure-draft', 'port-ready'] as const,
+    description: 'When used with --runReverseAgent, choose where the auto flow should stop: function slice only, pure draft, or port-ready draft.',
+  },
   execute: {
     type: 'boolean',
     description: 'When used with --orchestrateReverseTask, execute the generated plan.',
@@ -444,6 +449,7 @@ export async function executeKnowledgeCliCommand(
           taskId: String(args.runReverseAgent),
           maxRounds: typeof args.maxRounds === 'number' ? args.maxRounds : undefined,
           strategy: args.strategy as 'observe-first' | 'rebuild-first' | 'env-fix' | 'artifact-sync' | 'evidence-only' | undefined,
+          goalMode: args.goalMode as 'signature-only' | 'pure-draft' | 'port-ready' | undefined,
           outputMode: args.outputMode as 'compact' | 'verbose' | undefined,
           includeSummary: args.includeSummary,
         },

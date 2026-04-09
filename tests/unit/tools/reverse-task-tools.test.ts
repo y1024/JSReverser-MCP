@@ -195,12 +195,12 @@ describe('reverse task tools', () => {
     };
     runtime.collector.getTopPriorityFiles = () => ({
       files: [{
-        url: 'top-sign.js',
-        content: 'function signToken(token, nonce){ return token + nonce; } fetch("/api/sign", {method: "POST"})',
-        size: 96,
+        url: 'https://example.com/app.js',
+        content: 'function genH5st(appid, body, functionId) { return hash(body); } fetch("/api/h5st", {method: "POST"})',
+        size: 104,
         type: 'external',
       }],
-      totalSize: 96,
+      totalSize: 104,
       totalFiles: 1,
     });
     runtime.analyzer.understand = async (): Promise<UnderstandCodeResult> => ({
@@ -502,13 +502,14 @@ describe('reverse task tools', () => {
       } as Parameters<typeof runReverseAgentTool.handler>[0], response as unknown as Parameters<typeof runReverseAgentTool.handler>[1], makeAgentContext() as unknown as Parameters<typeof runReverseAgentTool.handler>[2]);
 
       const payload = extractFirstJsonBlock(response.lines) as {
-        run?: {roundsExecuted?: number; stopReason?: string; rounds?: Array<{primaryTool: string}>};
+        run?: {roundsExecuted?: number; stopReason?: string; goalMode?: string; rounds?: Array<{primaryTool: string}>};
         generatedArtifacts?: string[];
         nextBestTool?: string;
         continuation?: {invoke?: {tool?: string; params?: Record<string, unknown>}};
       };
       assert.strictEqual(payload.run?.stopReason, 'pure_extraction_ready');
       assert.strictEqual(payload.run?.roundsExecuted, 4);
+      assert.strictEqual(payload.run?.goalMode, 'pure-draft');
       assert.deepStrictEqual(payload.generatedArtifacts, [
         'understand-code.json',
         'deobfuscate-code.json',
@@ -551,12 +552,14 @@ describe('reverse task tools', () => {
         await readFile(path.join(rootDir, 'task-run-agent-001', 'pure-extraction.json'), 'utf8'),
       ) as Record<string, unknown>;
       assert.strictEqual(pureExtraction.stage, 'PureExtraction');
+      assert.strictEqual(pureExtraction.goalMode, 'pure-draft');
       assert.strictEqual(pureExtraction.mainFunction, 'genH5st');
 
       const fixtures = JSON.parse(
         await readFile(path.join(rootDir, 'task-run-agent-001', 'run', 'fixtures.json'), 'utf8'),
       ) as Record<string, unknown>;
       assert.strictEqual(fixtures.stage, 'PureExtraction');
+      assert.strictEqual(fixtures.goalMode, 'pure-draft');
       assert.strictEqual(fixtures.mainFunction, 'genH5st');
       assert.deepStrictEqual((fixtures.samples as Array<Record<string, unknown>>)[0].input, {
         appid: 'app-1',
@@ -570,8 +573,10 @@ describe('reverse task tools', () => {
         'utf8',
       );
       assert.ok(pureMain.includes('export function genH5st'));
+      assert.ok(pureMain.includes('export const GOAL_MODE = "pure-draft"'));
       assert.ok(pureMain.includes('deobfuscatedDraft'));
       assert.ok(pureMain.includes('export function runFixture'));
+      assert.ok(pureMain.includes('signature: null'));
 
       const selftest = await readFile(
         path.join(rootDir, 'task-run-agent-001', 'run', 'pure-selftest.test.mjs'),
@@ -579,6 +584,7 @@ describe('reverse task tools', () => {
       );
       assert.ok(selftest.includes("import {runFixture} from './pure-main.js'"));
       assert.ok(selftest.includes("runs first auto-generated fixture"));
+      assert.ok(selftest.includes('result.mainFunction'));
 
       const evidence = (
         await readFile(path.join(rootDir, 'task-run-agent-001', 'runtime-evidence.jsonl'), 'utf8')
@@ -593,6 +599,92 @@ describe('reverse task tools', () => {
       assert.ok(evidence.some((entry) => entry.kind === 'deobfuscate-code'));
       assert.ok(evidence.some((entry) => entry.kind === 'pure-draft'));
       assert.ok(evidence.some((entry) => entry.kind === 'auto-agent'));
+    } finally {
+      runtime.reverseTaskStore = originals.reverseTaskStore;
+      runtime.collector.collect = originals.collectorCollect;
+      runtime.collector.getTopPriorityFiles = originals.collectorGetTopPriorityFiles;
+      runtime.analyzer.understand = originals.analyzerUnderstand;
+      runtime.deobfuscator.deobfuscate = originals.deobfuscatorDeobfuscate;
+      await rm(rootDir, {recursive: true, force: true});
+    }
+  });
+
+  it('supports signature-only goal mode and stops after function slice', async () => {
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'jsreverser-mcp-task-run-agent-signature-'));
+    const runtime = getJSHookRuntime();
+    const originals = {
+      reverseTaskStore: runtime.reverseTaskStore,
+      collectorCollect: runtime.collector.collect,
+      collectorGetTopPriorityFiles: runtime.collector.getTopPriorityFiles,
+      analyzerUnderstand: runtime.analyzer.understand,
+      deobfuscatorDeobfuscate: runtime.deobfuscator.deobfuscate,
+    };
+
+    runtime.reverseTaskStore = new ReverseTaskStore({rootDir});
+    runtime.collector.collect = async (): Promise<CollectCodeResult> => ({
+      files: [{url: 'app.js', content: 'function sign(){return 1}', size: 32, type: 'external'}],
+      dependencies: {nodes: [], edges: []},
+      totalSize: 32,
+      collectTime: 1,
+    });
+    runtime.collector.getTopPriorityFiles = () => ({
+      files: [{
+        url: 'https://example.com/app.js',
+        content: 'function genH5st(appid, body, functionId) { return hash(body); } fetch("/api/h5st", {method: "POST"})',
+        size: 104,
+        type: 'external',
+      }],
+      totalSize: 104,
+      totalFiles: 1,
+    });
+
+    try {
+      await startReverseTaskTool.handler({
+        params: {
+          taskId: 'task-run-agent-signature-001',
+          taskSlug: 'run-agent-signature-demo',
+          targetUrl: 'https://example.com/api/h5st',
+          goal: 'signature-only flow',
+          targetContext: {
+            targetRequest: {
+              method: 'POST',
+              url: 'https://example.com/api/h5st',
+            },
+          },
+        },
+      }, makeResponse() as unknown as Parameters<typeof startReverseTaskTool.handler>[1], {} as Parameters<typeof startReverseTaskTool.handler>[2]);
+
+      const response = makeResponse();
+      await runReverseAgentTool.handler({
+        params: {
+          taskId: 'task-run-agent-signature-001',
+          maxRounds: 6,
+          goalMode: 'signature-only',
+        },
+      } as Parameters<typeof runReverseAgentTool.handler>[0], response as unknown as Parameters<typeof runReverseAgentTool.handler>[1], makeAgentContext() as unknown as Parameters<typeof runReverseAgentTool.handler>[2]);
+
+      const payload = extractFirstJsonBlock(response.lines) as {
+        run?: {roundsExecuted?: number; stopReason?: string; goalMode?: string; rounds?: Array<{primaryTool: string}>};
+        generatedArtifacts?: string[];
+      };
+      assert.strictEqual(payload.run?.stopReason, 'analysis_completed');
+      assert.strictEqual(payload.run?.roundsExecuted, 3);
+      assert.strictEqual(payload.run?.goalMode, 'signature-only');
+      assert.deepStrictEqual(payload.generatedArtifacts, ['function-slice.json']);
+      assert.deepStrictEqual(payload.run?.rounds?.map((entry) => entry.primaryTool), [
+        'locate_signature_function',
+        'search_in_sources',
+        'extract_function_tree',
+      ]);
+
+      const functionSlice = JSON.parse(
+        await readFile(path.join(rootDir, 'task-run-agent-signature-001', 'function-slice.json'), 'utf8'),
+      ) as Record<string, unknown>;
+      assert.strictEqual(functionSlice.mainFunction, 'genH5st');
+
+      await assert.rejects(
+        readFile(path.join(rootDir, 'task-run-agent-signature-001', 'pure-extraction.json'), 'utf8'),
+      );
     } finally {
       runtime.reverseTaskStore = originals.reverseTaskStore;
       runtime.collector.collect = originals.collectorCollect;
