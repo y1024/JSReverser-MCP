@@ -37,9 +37,18 @@ export const cliOptions = {
     type: 'string',
     description: 'Run the one-shot reverse agent loop for one task id.',
   },
+  exportPortableBundle: {
+    type: 'string',
+    description: 'Export portable single-file reverse artifacts for one task id.',
+  },
   maxRounds: {
     type: 'number',
     description: 'When used with --runReverseAgent, maximum orchestration rounds to execute.',
+  },
+  artifactMode: {
+    type: 'string',
+    choices: ['portable', 'rebuild', 'pure'] as const,
+    description: 'When used with --exportPortableBundle, choose whether to export both portable files, rebuild-only, or pure-only.',
   },
   goalMode: {
     type: 'string',
@@ -435,6 +444,42 @@ export async function executeKnowledgeCliCommand(
   args: Partial<CliArguments>,
   writeLine: (line: string) => void = (line) => console.log(line),
 ): Promise<boolean> {
+  if (args.exportPortableBundle) {
+    const {ReverseTaskStore} = await import('./reverse/ReverseTaskStore.js');
+    const {exportPortableBundle} = await import('./tools/rebuild.js');
+    const store = new ReverseTaskStore();
+    const runtime = getJSHookRuntime();
+    const originalStore = runtime.reverseTaskStore;
+    runtime.reverseTaskStore = store;
+    try {
+      const lines: string[] = [];
+      await exportPortableBundle.handler({
+        params: {
+          taskId: String(args.exportPortableBundle),
+          artifactMode: args.artifactMode as 'portable' | 'rebuild' | 'pure' | undefined,
+        },
+      } as Parameters<typeof exportPortableBundle.handler>[0], {
+        appendResponseLine(value: string) {
+          lines.push(value);
+        },
+        setIncludePages: () => undefined,
+        setIncludeNetworkRequests: () => undefined,
+        setIncludeConsoleData: () => undefined,
+        attachImage: () => undefined,
+        attachNetworkRequest: () => undefined,
+        attachConsoleMessage: () => undefined,
+        setIncludeWebSocketConnections: () => undefined,
+        attachWebSocket: () => undefined,
+      } as Parameters<typeof exportPortableBundle.handler>[1], {} as Parameters<typeof exportPortableBundle.handler>[2]);
+      const start = lines.indexOf('```json');
+      const end = lines.indexOf('```', start + 1);
+      writeLine(lines.slice(start + 1, end).join('\n'));
+      return true;
+    } finally {
+      runtime.reverseTaskStore = originalStore;
+    }
+  }
+
   if (args.runReverseAgent) {
     const {ReverseTaskStore} = await import('./reverse/ReverseTaskStore.js');
     const {runReverseAgentTool} = await import('./tools/agent-runner.js');

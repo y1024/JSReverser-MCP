@@ -26,8 +26,10 @@ interface ParsedArgsLike {
   manageReverseTask?: string;
   orchestrateReverseTask?: string;
   runReverseAgent?: string;
+  exportPortableBundle?: string;
   maxRounds?: number;
   goalMode?: string;
+  artifactMode?: string;
   execute?: boolean;
   resume?: boolean;
   stopOnError?: boolean;
@@ -223,6 +225,20 @@ describe('cli extended coverage', () => {
     assert.strictEqual(parsed.strategy, 'evidence-only');
     assert.strictEqual(parsed.outputMode, 'compact');
     assert.strictEqual(parsed.includeSummary, false);
+  });
+
+  it('parseArguments supports exportPortableBundle flags', () => {
+    const parsed = parseArguments('1.2.3', [
+      'node',
+      'cli.js',
+      '--exportPortableBundle',
+      'task-88',
+      '--artifactMode',
+      'pure',
+    ]) as ParsedArgsLike;
+
+    assert.strictEqual(parsed.exportPortableBundle, 'task-88');
+    assert.strictEqual(parsed.artifactMode, 'pure');
   });
 
   it('parseArguments keeps explicit launch target without forcing channel', () => {

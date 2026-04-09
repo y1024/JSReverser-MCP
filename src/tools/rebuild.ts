@@ -469,6 +469,7 @@ export const exportPortableBundle = defineTool({
   annotations: {category: ToolCategory.REVERSE_ENGINEERING, readOnlyHint: false},
   schema: {
     taskId: zod.string(),
+    artifactMode: zod.enum(['portable', 'rebuild', 'pure']).optional().default('portable'),
     includePurePortable: zod.boolean().optional().default(true),
     includeRebuildPortable: zod.boolean().optional().default(true),
   },
@@ -484,7 +485,14 @@ export const exportPortableBundle = defineTool({
 
     const generatedFiles: string[] = [];
 
-    if (request.params.includePurePortable !== false) {
+    const includePurePortable = request.params.artifactMode === 'rebuild'
+      ? false
+      : request.params.includePurePortable !== false;
+    const includeRebuildPortable = request.params.artifactMode === 'pure'
+      ? false
+      : request.params.includeRebuildPortable !== false;
+
+    if (includePurePortable) {
       const [pureMainSource, fixtures, pureExtraction] = await Promise.all([
         readTextArtifact(task.taskDir, 'run/pure-main.js'),
         readJsonArtifact(task.taskDir, 'run/fixtures.json'),
@@ -501,7 +509,7 @@ export const exportPortableBundle = defineTool({
       }
     }
 
-    if (request.params.includeRebuildPortable !== false) {
+    if (includeRebuildPortable) {
       const [envCode, polyfillsCode, entryCode, capture] = await Promise.all([
         readTextArtifact(task.taskDir, 'env/env.js'),
         readTextArtifact(task.taskDir, 'env/polyfills.js'),
@@ -525,6 +533,7 @@ export const exportPortableBundle = defineTool({
       ok: true,
       taskId: task.taskId,
       taskDir: task.taskDir,
+      artifactMode: request.params.artifactMode ?? 'portable',
       generatedFiles,
       compactDelivery: generatedFiles.length > 0,
     }, null, 2));

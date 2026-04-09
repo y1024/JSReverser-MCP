@@ -5,7 +5,7 @@
  */
 
 import assert from 'node:assert';
-import {mkdtemp, readFile, rm} from 'node:fs/promises';
+import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {describe, it} from 'node:test';
@@ -554,6 +554,81 @@ describe('doctor cli', () => {
     } finally {
       runtime.analyzer.understand = originals.analyzerUnderstand;
       runtime.deobfuscator.deobfuscate = originals.deobfuscatorDeobfuscate;
+      if (originalArtifactsDir === undefined) {
+        delete process.env.JSREVERSER_ARTIFACTS_DIR;
+      } else {
+        process.env.JSREVERSER_ARTIFACTS_DIR = originalArtifactsDir;
+      }
+      await rm(rootDir, {recursive: true, force: true});
+    }
+  });
+
+  it('supports exportPortableBundle CLI execution for compact delivery artifacts', async () => {
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'jsreverser-cli-portable-export-'));
+    const originalArtifactsDir = process.env.JSREVERSER_ARTIFACTS_DIR;
+
+    try {
+      process.env.JSREVERSER_ARTIFACTS_DIR = rootDir;
+      const store = new ReverseTaskStore({rootDir});
+      const task = await store.openTask({
+        taskId: 'task-cli-portable-001',
+        slug: 'cli-portable-demo',
+        targetUrl: 'https://example.com/api/sign',
+        goal: 'cli portable export',
+      });
+      await task.writeSnapshot('task.json', {
+        taskId: 'task-cli-portable-001',
+        slug: 'cli-portable-demo',
+        targetUrl: 'https://example.com/api/sign',
+        goal: 'cli portable export',
+      });
+      await task.writeSnapshot('pure-extraction.json', {
+        stage: 'PureExtraction',
+        goalMode: 'pure-draft',
+        mainFunction: 'signPayload',
+      });
+      await mkdir(path.join(rootDir, 'task-cli-portable-001', 'run'), {recursive: true});
+      await mkdir(path.join(rootDir, 'task-cli-portable-001', 'env'), {recursive: true});
+      await writeFile(path.join(rootDir, 'task-cli-portable-001', 'run', 'fixtures.json'), `${JSON.stringify({
+        goalMode: 'pure-draft',
+        mainFunction: 'signPayload',
+        samples: [{caseId: 'fixture-001', input: {token: 'a'}, runtimeContext: {}}],
+      }, null, 2)}\n`);
+      await writeFile(path.join(rootDir, 'task-cli-portable-001', 'env', 'capture.json'), `${JSON.stringify({
+        runtimeEvidence: [{functionName: 'signPayload'}],
+      }, null, 2)}\n`);
+      await writeFile(path.join(rootDir, 'task-cli-portable-001', 'run', 'pure-main.js'), [
+        'export function signPayload(input, runtimeContext = {}) {',
+        '  return {ok: false, input, runtimeContext, signature: null};',
+        '}',
+        'export function runFixture(fixture) {',
+        '  return signPayload(fixture.input ?? {}, fixture.runtimeContext ?? {});',
+        '}',
+      ].join('\n'));
+      await writeFile(path.join(rootDir, 'task-cli-portable-001', 'env', 'env.js'), 'globalThis.window = globalThis;\n');
+      await writeFile(path.join(rootDir, 'task-cli-portable-001', 'env', 'polyfills.js'), 'globalThis.atob = (v) => v;\n');
+      await writeFile(path.join(rootDir, 'task-cli-portable-001', 'env', 'entry.js'), 'import "./env.js";\nimport "./polyfills.js";\nconsole.log("replay");\n');
+
+      const lines: string[] = [];
+      const handled = await executeKnowledgeCliCommand({
+        exportPortableBundle: 'task-cli-portable-001',
+        artifactMode: 'pure',
+      }, (line) => lines.push(line));
+      assert.strictEqual(handled, true);
+
+      const payload = JSON.parse(lines[0]) as {
+        artifactMode?: string;
+        generatedFiles?: string[];
+      };
+      assert.strictEqual(payload.artifactMode, 'pure');
+      assert.deepStrictEqual(payload.generatedFiles, ['run/portable.js']);
+
+      const portable = await readFile(
+        path.join(rootDir, 'task-cli-portable-001', 'run', 'portable.js'),
+        'utf8',
+      );
+      assert.ok(portable.includes('runPortableFixture'));
+    } finally {
       if (originalArtifactsDir === undefined) {
         delete process.env.JSREVERSER_ARTIFACTS_DIR;
       } else {

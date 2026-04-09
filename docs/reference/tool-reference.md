@@ -71,6 +71,7 @@
   - [`remove_hook`](#remove_hook)
   - [`resume`](#resume)
   - [`risk_panel`](#risk_panel)
+  - [`export_portable_bundle`](#export_portable_bundle)
   - [`search_in_scripts`](#search_in_scripts)
   - [`search_in_sources`](#search_in_sources)
   - [`set_breakpoint_on_text`](#set_breakpoint_on_text)
@@ -879,6 +880,28 @@ so returned values have to JSON-serializable.
   }
 }
 ```
+
+### `export_portable_bundle`
+
+**Description:** Collapse existing task-local analysis artifacts into portable delivery files. It keeps the original analysis artifacts untouched and only generates compact outputs for carrying or handoff.
+
+**Parameters:**
+
+- `taskId`
+- `artifactMode`
+- `includePurePortable`
+- `includeRebuildPortable`
+
+**Artifact modes:**
+
+- `portable`
+- `pure`
+- `rebuild`
+
+**Typical outputs:**
+
+- `run/portable.js`
+- `env/replay.js`
 
 ### `get_rebuild_health_report`
 

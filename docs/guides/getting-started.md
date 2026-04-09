@@ -117,6 +117,13 @@ node build/src/index.js --doctor
   - `run/fixtures.json`
   - `run/pure-main.js`
   - `run/pure-selftest.test.mjs`
+- 如果你要把分析态产物压成便携交付文件，直接用 `export_portable_bundle`
+  - `artifactMode=portable`：同时导出 `run/portable.js` 和 `env/replay.js`
+  - `artifactMode=pure`：只导出 `run/portable.js`
+  - `artifactMode=rebuild`：只导出 `env/replay.js`
+- CLI 例子：
+  - `jsreverser-mcp --exportPortableBundle <taskId>`
+  - `jsreverser-mcp --exportPortableBundle <taskId> --artifactMode pure`
 - 编排 checkpoint、`orchestration-checkpoint.json` 结构，以及它和 `codex --resume` 的区别见 [docs/guides/reverse-task-orchestration.md](./reverse-task-orchestration.md)
 - 如果你是给大模型 / agent 接 MCP，先看一页版速查：[docs/guides/mcp-agent-quick-reference.md](./mcp-agent-quick-reference.md)
 - 如果你要自己写 Node.js / TypeScript client 自动续跑，可直接抄：[docs/guides/mcp-client-auto-resume-example.md](./mcp-client-auto-resume-example.md)
