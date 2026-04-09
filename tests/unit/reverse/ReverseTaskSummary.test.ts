@@ -5,7 +5,7 @@
  */
 
 import assert from 'node:assert';
-import {mkdtemp, rm} from 'node:fs/promises';
+import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {describe, it} from 'node:test';
@@ -44,6 +44,10 @@ describe('ReverseTaskSummary', () => {
         kind: 'env-gap',
         note: 'localStorage is not defined',
       });
+      await mkdir(path.join(rootDir, 'task-summary-001', 'run'), {recursive: true});
+      await mkdir(path.join(rootDir, 'task-summary-001', 'env'), {recursive: true});
+      await writeFile(path.join(rootDir, 'task-summary-001', 'run', 'portable.js'), '// portable');
+      await writeFile(path.join(rootDir, 'task-summary-001', 'env', 'replay.js'), '// replay');
 
       const result = await summarizeReverseTask(store, 'task-summary-001');
       assert.strictEqual(result.taskId, 'task-summary-001');
@@ -54,6 +58,9 @@ describe('ReverseTaskSummary', () => {
       assert.ok(result.evidenceAggregates.topFunctions.some((entry) => entry.value === 'signPayload'));
       assert.ok(result.evidenceAggregates.blockers.includes('localStorage is not defined'));
       assert.ok(result.evidenceAggregates.links.requestToFunctions.some((entry) => entry.functions.includes('signPayload')));
+      assert.strictEqual(result.compactDelivery.portablePureReady, true);
+      assert.strictEqual(result.compactDelivery.portableReplayReady, true);
+      assert.deepStrictEqual(result.compactDelivery.files, ['run/portable.js', 'env/replay.js']);
       void task;
     } finally {
       await rm(rootDir, {recursive: true, force: true});

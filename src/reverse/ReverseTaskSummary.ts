@@ -7,6 +7,7 @@
 import type {ReverseTaskStore} from './ReverseTaskStore.js';
 import {getReverseTaskState} from './ReverseTaskQuery.js';
 import type {ReverseTaskEvidenceAggregates} from './ReverseTaskEvidenceIndex.js';
+import type {ReverseTaskCompactDelivery} from './ReverseTaskQuery.js';
 
 function stringifyList(items: unknown[], limit: number): string[] {
   return items.slice(-limit).map((item) => {
@@ -51,6 +52,7 @@ export async function summarizeReverseTask(
   signals: Record<string, unknown>;
   reasoning: string[];
   evidenceAggregates: ReverseTaskEvidenceAggregates;
+  compactDelivery: ReverseTaskCompactDelivery;
 }> {
   const state = await getReverseTaskState(store, taskId, options);
   const currentStage = String(state.state?.currentStage ?? state.task?.currentStage ?? 'Observe');
@@ -82,5 +84,6 @@ export async function summarizeReverseTask(
     signals,
     reasoning,
     evidenceAggregates: state.evidenceAggregates,
+    compactDelivery: state.compactDelivery,
   };
 }

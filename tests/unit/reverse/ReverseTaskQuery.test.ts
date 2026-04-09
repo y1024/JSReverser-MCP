@@ -5,7 +5,7 @@
  */
 
 import assert from 'node:assert';
-import {mkdtemp, rm} from 'node:fs/promises';
+import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {describe, it} from 'node:test';
@@ -49,6 +49,10 @@ describe('ReverseTaskQuery', () => {
         kind: 'env-gap',
         note: 'window is not defined',
       });
+      await mkdir(path.join(rootDir, 'task-query-001', 'run'), {recursive: true});
+      await mkdir(path.join(rootDir, 'task-query-001', 'env'), {recursive: true});
+      await writeFile(path.join(rootDir, 'task-query-001', 'run', 'portable.js'), '// portable');
+      await writeFile(path.join(rootDir, 'task-query-001', 'env', 'replay.js'), '// replay');
 
       const result = await getReverseTaskState(store, 'task-query-001', {timelineLimit: 5, evidenceLimit: 5});
       assert.strictEqual(result.taskId, 'task-query-001');
@@ -63,6 +67,9 @@ describe('ReverseTaskQuery', () => {
       assert.ok(result.evidenceAggregates.links.functionToCandidateScripts.length >= 0);
       assert.strictEqual(result.evidenceAggregates.total, 4);
       assert.strictEqual(result.evidenceAggregates.dedupedTotal, 3);
+      assert.strictEqual(result.compactDelivery.portablePureReady, true);
+      assert.strictEqual(result.compactDelivery.portableReplayReady, true);
+      assert.deepStrictEqual(result.compactDelivery.files, ['run/portable.js', 'env/replay.js']);
       void task;
     } finally {
       await rm(rootDir, {recursive: true, force: true});

@@ -63,6 +63,10 @@ describe('doctor cli', () => {
         kind: 'hook-hit',
         note: 'captured from CLI flow',
       });
+      await mkdir(path.join(rootDir, 'task-cli-001', 'run'), {recursive: true});
+      await mkdir(path.join(rootDir, 'task-cli-001', 'env'), {recursive: true});
+      await writeFile(path.join(rootDir, 'task-cli-001', 'run', 'portable.js'), '// portable');
+      await writeFile(path.join(rootDir, 'task-cli-001', 'env', 'replay.js'), '// replay');
 
       const listLines: string[] = [];
       const listHandled = await executeKnowledgeCliCommand({manageReverseTask: 'list'}, (line) => listLines.push(line));
@@ -77,18 +81,24 @@ describe('doctor cli', () => {
         (line) => stateLines.push(line),
       );
       assert.strictEqual(stateHandled, true);
-      const statePayload = JSON.parse(stateLines[0]) as {action: string; taskId: string; recentEvidence: Array<{source: string}>};
+      const statePayload = JSON.parse(stateLines[0]) as {action: string; taskId: string; recentEvidence: Array<{source: string}>; compactDelivery?: {portablePureReady?: boolean; portableReplayReady?: boolean; files?: string[]}};
       assert.strictEqual(statePayload.action, 'get');
       assert.strictEqual(statePayload.taskId, 'task-cli-001');
       assert.strictEqual(statePayload.recentEvidence[0]?.source, 'hook');
+      assert.strictEqual(statePayload.compactDelivery?.portablePureReady, true);
+      assert.strictEqual(statePayload.compactDelivery?.portableReplayReady, true);
+      assert.deepStrictEqual(statePayload.compactDelivery?.files, ['run/portable.js', 'env/replay.js']);
 
       const summaryLines: string[] = [];
       const summaryHandled = await executeKnowledgeCliCommand({manageReverseTask: 'summarize', taskId: 'task-cli-001'}, (line) => summaryLines.push(line));
       assert.strictEqual(summaryHandled, true);
-      const summaryPayload = JSON.parse(summaryLines[0]) as {action: string; taskId: string; goal: string};
+      const summaryPayload = JSON.parse(summaryLines[0]) as {action: string; taskId: string; goal: string; compactDelivery?: {portablePureReady?: boolean; portableReplayReady?: boolean; files?: string[]}};
       assert.strictEqual(summaryPayload.action, 'summarize');
       assert.strictEqual(summaryPayload.taskId, 'task-cli-001');
       assert.strictEqual(summaryPayload.goal, 'cli task flow');
+      assert.strictEqual(summaryPayload.compactDelivery?.portablePureReady, true);
+      assert.strictEqual(summaryPayload.compactDelivery?.portableReplayReady, true);
+      assert.deepStrictEqual(summaryPayload.compactDelivery?.files, ['run/portable.js', 'env/replay.js']);
 
       const progressLines: string[] = [];
       const progressHandled = await executeKnowledgeCliCommand({manageReverseTask: 'progress', taskId: 'task-cli-001'}, (line) => progressLines.push(line));

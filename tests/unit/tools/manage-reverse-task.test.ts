@@ -5,7 +5,7 @@
  */
 
 import assert from 'node:assert';
-import {mkdtemp, readFile, rm} from 'node:fs/promises';
+import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {describe, it} from 'node:test';
@@ -61,6 +61,10 @@ describe('manage_reverse_task tool', () => {
         goal: 'manage task tool',
       });
       await opened.appendLog('runtime-evidence', {source: 'hook', kind: 'hook-hit', note: 'aggregate path'});
+      await mkdir(path.join(rootDir, 'task-manage-001', 'run'), {recursive: true});
+      await mkdir(path.join(rootDir, 'task-manage-001', 'env'), {recursive: true});
+      await writeFile(path.join(rootDir, 'task-manage-001', 'run', 'portable.js'), '// portable');
+      await writeFile(path.join(rootDir, 'task-manage-001', 'env', 'replay.js'), '// replay');
 
       const listResponse = makeResponse();
       await manageReverseTaskTool.handler({
@@ -78,11 +82,14 @@ describe('manage_reverse_task tool', () => {
       await manageReverseTaskTool.handler({
         params: {action: 'get', taskId: 'task-manage-001'},
       }, getResponse as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]);
-      const getPayload = JSON.parse(getResponse.lines[1] ?? '{}') as {action: string; taskId: string; artifacts?: string[]; schemaVersion?: string; responseSummary?: string; diagnostics?: Record<string, unknown>};
+      const getPayload = JSON.parse(getResponse.lines[1] ?? '{}') as {action: string; taskId: string; artifacts?: string[]; schemaVersion?: string; responseSummary?: string; diagnostics?: Record<string, unknown>; compactDelivery?: {portablePureReady?: boolean; portableReplayReady?: boolean; files?: string[]}};
       assert.strictEqual(getPayload.action, 'get');
       assert.strictEqual(getPayload.schemaVersion, '1.0');
       assert.strictEqual(getPayload.taskId, 'task-manage-001');
       assert.ok(getPayload.artifacts?.includes('task.json'));
+      assert.strictEqual(getPayload.compactDelivery?.portablePureReady, true);
+      assert.strictEqual(getPayload.compactDelivery?.portableReplayReady, true);
+      assert.deepStrictEqual(getPayload.compactDelivery?.files, ['run/portable.js', 'env/replay.js']);
       assert.ok(typeof getPayload.responseSummary === 'string');
       assert.ok(getPayload.diagnostics);
 
@@ -145,10 +152,13 @@ describe('manage_reverse_task tool', () => {
       await manageReverseTaskTool.handler({
         params: {action: 'summarize', taskId: 'task-manage-001'},
       }, summarizeResponse as unknown as Parameters<typeof manageReverseTaskTool.handler>[1], {} as Parameters<typeof manageReverseTaskTool.handler>[2]);
-      const summarizePayload = JSON.parse(summarizeResponse.lines[1] ?? '{}') as {action: string; taskId: string; reasoning: string[]; artifacts?: string[]; schemaVersion?: string; responseSummary?: string; diagnostics?: Record<string, unknown>};
+      const summarizePayload = JSON.parse(summarizeResponse.lines[1] ?? '{}') as {action: string; taskId: string; reasoning: string[]; artifacts?: string[]; schemaVersion?: string; responseSummary?: string; diagnostics?: Record<string, unknown>; compactDelivery?: {portablePureReady?: boolean; portableReplayReady?: boolean; files?: string[]}};
       assert.strictEqual(summarizePayload.action, 'summarize');
       assert.strictEqual(summarizePayload.taskId, 'task-manage-001');
       assert.ok(summarizePayload.artifacts?.includes('report.md'));
+      assert.strictEqual(summarizePayload.compactDelivery?.portablePureReady, true);
+      assert.strictEqual(summarizePayload.compactDelivery?.portableReplayReady, true);
+      assert.deepStrictEqual(summarizePayload.compactDelivery?.files, ['run/portable.js', 'env/replay.js']);
       assert.ok(typeof summarizePayload.responseSummary === 'string');
       assert.ok(summarizePayload.diagnostics);
 
