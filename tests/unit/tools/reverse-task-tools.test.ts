@@ -780,9 +780,17 @@ describe('reverse task tools', () => {
 
       const payload = extractFirstJsonBlock(response.lines) as {
         run?: {stopReason?: string; goalMode?: string};
+        nextBestTool?: string;
+        continuation?: {invoke?: {tool?: string; params?: Record<string, unknown>}};
       };
       assert.strictEqual(payload.run?.stopReason, 'pure_extraction_ready');
       assert.strictEqual(payload.run?.goalMode, 'port-ready');
+      assert.strictEqual(payload.nextBestTool, 'export_portable_bundle');
+      assert.strictEqual(payload.continuation?.invoke?.tool, 'export_portable_bundle');
+      assert.deepStrictEqual(payload.continuation?.invoke?.params, {
+        taskId: 'task-run-agent-port-001',
+        artifactMode: 'pure',
+      });
 
       const pureExtraction = JSON.parse(
         await readFile(path.join(rootDir, 'task-run-agent-port-001', 'pure-extraction.json'), 'utf8'),

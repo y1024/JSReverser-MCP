@@ -248,6 +248,7 @@ export function buildRebuildHealthAgentHints(args: {
 
 export function buildRunReverseAgentHints(args: {
   taskId: string;
+  goalMode?: 'signature-only' | 'pure-draft' | 'port-ready';
   stopReason: 'analysis_completed' | 'pure_extraction_ready' | 'task_passed' | 'blocked' | 'checkpoint_required' | 'stalled' | 'max_rounds';
   finalState: {
     state?: {status?: string; nextStepHint?: string; currentStage?: string};
@@ -256,7 +257,7 @@ export function buildRunReverseAgentHints(args: {
   roundsExecuted: number;
   maxRounds: number;
 }): ReverseTaskAgentHints {
-  const {taskId, stopReason, finalState, lastPrimaryStep, roundsExecuted, maxRounds} = args;
+  const {taskId, goalMode, stopReason, finalState, lastPrimaryStep, roundsExecuted, maxRounds} = args;
   if (stopReason === 'analysis_completed') {
     return {
       status: 'ok',
@@ -274,6 +275,21 @@ export function buildRunReverseAgentHints(args: {
   }
 
   if (stopReason === 'pure_extraction_ready') {
+    if (goalMode === 'port-ready') {
+      return {
+        status: 'ok',
+        summary: '已自动完成 port-ready 草稿，建议直接导出 pure portable 单文件。',
+        recommendedNextAction: '直接导出 run/portable.js，作为便携 pure 交付物，再决定是否保留分析态 artifacts。',
+        recommendedTool: 'export_portable_bundle',
+        toolClass: 'analysis',
+        routeHint: 'switch_to_analysis',
+        avoidTools: ['run_reverse_agent'],
+        recommendedStrategy: 'evidence-only',
+        recommendedParams: {taskId, artifactMode: 'pure'},
+        confidence: 0.96,
+        resumeHint: `可执行 --exportPortableBundle ${taskId} --artifactMode pure`,
+      };
+    }
     return {
       status: 'ok',
       summary: '已自动完成切片理解与去混淆预处理，当前任务已推进到 PureExtraction 准备态。',

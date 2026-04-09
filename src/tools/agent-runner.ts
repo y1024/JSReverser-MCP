@@ -652,6 +652,7 @@ export const runReverseAgentTool = defineTool({
     );
     const agentGuidance = buildRunReverseAgentHints({
       taskId: request.params.taskId,
+      goalMode,
       stopReason,
       finalState,
       lastPrimaryStep: lastResult.orchestration.primaryStep,
