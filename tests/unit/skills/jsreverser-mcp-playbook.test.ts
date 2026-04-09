@@ -16,7 +16,7 @@ async function readRepoFile(relativePath: string): Promise<string> {
 }
 
 describe('jsreverser-mcp-playbook docs contract', () => {
-  it('defines the staged workflow, principles, task artifacts, and local rebuild references', async () => {
+  it('defines the staged workflow, principles, task artifacts, local rebuild references, and task-driven routing', async () => {
     const skill = await readRepoFile('skills/jsreverser-mcp-playbook/SKILL.md');
     const automationEntry = await readRepoFile('skills/jsreverser-mcp-playbook/references/automation-entry.md');
     const taskTemplate = await readRepoFile('skills/jsreverser-mcp-playbook/references/mcp-task-template.md');
@@ -24,6 +24,7 @@ describe('jsreverser-mcp-playbook docs contract', () => {
     const fallbacks = await readRepoFile('skills/jsreverser-mcp-playbook/references/fallbacks.md');
     const taskArtifacts = await readRepoFile('skills/jsreverser-mcp-playbook/references/task-artifacts.md');
     const localRebuild = await readRepoFile('skills/jsreverser-mcp-playbook/references/local-rebuild.md');
+    const openaiAgent = await readRepoFile('skills/jsreverser-mcp-playbook/agents/openai.yaml');
 
     for (const phrase of [
       'Observe',
@@ -36,6 +37,7 @@ describe('jsreverser-mcp-playbook docs contract', () => {
       'Breakpoint-last',
       'Rebuild-oriented',
       'Evidence-first',
+      'Task-driven',
     ]) {
       assert.ok(skill.includes(phrase), `missing phrase in skill: ${phrase}`);
     }
@@ -55,5 +57,18 @@ describe('jsreverser-mcp-playbook docs contract', () => {
     assert.ok(skill.includes('docs/reference/reverse-bootstrap.md'));
     assert.ok(skill.includes('docs/reference/env-patching.md'));
     assert.ok(skill.includes('docs/reference/pure-extraction.md'));
+    assert.ok(skill.includes('manage_reverse_task'));
+    assert.ok(skill.includes('orchestrate_reverse_task'));
+    assert.ok(skill.includes('run_reverse_agent'));
+    assert.ok(skill.includes('export_portable_bundle'));
+    assert.ok(skill.includes('get_parameter_workflow'));
+    assert.ok(skill.includes('continuation.invoke'));
+    assert.ok(skill.includes('compactDelivery'));
+    assert.ok(openaiAgent.includes('task-driven'));
+    assert.ok(openaiAgent.includes('manage_reverse_task'));
+    assert.ok(openaiAgent.includes('orchestrate_reverse_task'));
+    assert.ok(openaiAgent.includes('run_reverse_agent'));
+    assert.ok(openaiAgent.includes('export_portable_bundle'));
+    assert.ok(openaiAgent.includes('get_parameter_workflow'));
   });
 });

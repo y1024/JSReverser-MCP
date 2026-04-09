@@ -125,6 +125,7 @@ read responseSummary
 ## 9. 详细文档入口
 
 - 快速开始：`docs/guides/getting-started.md`
+- 客户端 system prompt：`docs/guides/client-system-prompt.md`
 - 编排与恢复：`docs/guides/reverse-task-orchestration.md`
 - Node/TS 自动续跑示例：`docs/guides/mcp-client-auto-resume-example.md`
 - 运行时版本：响应体里的 `schemaVersion` 当前固定为 `"1.0"`
@@ -178,3 +179,7 @@ read responseSummary
 ```text
 JSReverser-MCP: 状态看 manage_reverse_task，自动推进用 orchestrate_reverse_task，env gap 用 get_rebuild_health_report，证据落盘用 record_reverse_evidence。先读 responseSummary，再读 outcome，再读 errorType/blockedBy，再读 routeGuard，最后执行 continuation.invoke。blocked 就先解阻塞，partial+retryable 就续跑，shouldSwitchStrategy=true 就换策略，continuation.ready=false 就停止。
 ```
+
+如果你要一版更完整、直接可复制到客户端配置里的提示词，看：
+
+- `docs/guides/client-system-prompt.md`
