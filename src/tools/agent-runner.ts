@@ -1,4 +1,4 @@
-import {mkdir, writeFile} from 'node:fs/promises';
+import {mkdir, readFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 
 import {getReverseTaskState} from '../reverse/ReverseTaskQuery.js';
@@ -224,15 +224,42 @@ function buildStepFingerprint(step: {tool: string; params?: Record<string, unkno
   return `${step.tool}:${JSON.stringify(step.params ?? {})}`;
 }
 
+function tryParseJsonObject(value: unknown): Record<string, unknown> | undefined {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function readCaptureSnapshot(taskId: string): Promise<Record<string, unknown> | undefined> {
+  const runtime = getJSHookRuntime();
+  const capturePath = path.join(runtime.reverseTaskStore.getTaskDir(taskId), 'env', 'capture.json');
+  try {
+    return JSON.parse(await readFile(capturePath, 'utf8')) as Record<string, unknown>;
+  } catch {
+    return undefined;
+  }
+}
+
 async function materializePureExtractionDrafts(taskId: string): Promise<void> {
   const runtime = getJSHookRuntime();
   const runDir = path.join(runtime.reverseTaskStore.getTaskDir(taskId), 'run');
   await mkdir(runDir, {recursive: true});
 
-  const [functionSlice, understandSnapshot, deobfuscateSnapshot] = await Promise.all([
+  const [functionSlice, understandSnapshot, deobfuscateSnapshot, targetContext, runtimeEvidence, captureSnapshot] = await Promise.all([
     runtime.reverseTaskStore.readSnapshot<Record<string, unknown>>(taskId, 'function-slice.json'),
     runtime.reverseTaskStore.readSnapshot<Record<string, unknown>>(taskId, 'understand-code.json'),
     runtime.reverseTaskStore.readSnapshot<Record<string, unknown>>(taskId, 'deobfuscate-code.json'),
+    runtime.reverseTaskStore.readSnapshot<Record<string, unknown>>(taskId, 'target-context.json'),
+    runtime.reverseTaskStore.readLog('runtime-evidence', taskId),
+    readCaptureSnapshot(taskId),
   ]);
 
   const mainFunction = String(functionSlice?.mainFunction ?? 'main');
@@ -250,6 +277,42 @@ async function materializePureExtractionDrafts(taskId: string): Promise<void> {
     typeof (deobfuscateSnapshot.result as Record<string, unknown>).analysis === 'string'
       ? String((deobfuscateSnapshot.result as Record<string, unknown>).analysis)
       : 'pending';
+  const targetRequest =
+    targetContext?.targetRequest && typeof targetContext.targetRequest === 'object'
+      ? targetContext.targetRequest as Record<string, unknown>
+      : undefined;
+  const firstEvidenceWithBody = runtimeEvidence.find((entry) =>
+    typeof entry.bodyPreview === 'string' || typeof entry.body === 'string',
+  );
+  const inferredInput =
+    tryParseJsonObject(firstEvidenceWithBody?.bodyPreview) ??
+    tryParseJsonObject(firstEvidenceWithBody?.body) ??
+    (
+      captureSnapshot?.runtimeEvidence &&
+      Array.isArray(captureSnapshot.runtimeEvidence) &&
+      captureSnapshot.runtimeEvidence[0] &&
+      typeof captureSnapshot.runtimeEvidence[0] === 'object'
+        ? tryParseJsonObject((captureSnapshot.runtimeEvidence[0] as Record<string, unknown>).bodyPreview)
+        : undefined
+    ) ??
+    {};
+  const inferredExpected = {
+    requestUrl:
+      typeof firstEvidenceWithBody?.requestUrl === 'string'
+        ? firstEvidenceWithBody.requestUrl
+        : (typeof targetRequest?.url === 'string' ? targetRequest.url : scriptUrl),
+    targetParam:
+      typeof (targetContext?.locatedSignature as Record<string, unknown> | undefined)?.targetParam === 'string'
+        ? (targetContext?.locatedSignature as Record<string, unknown>).targetParam
+        : 'TODO',
+  };
+  const runtimeContext = {
+    request: {
+      method: typeof targetRequest?.method === 'string' ? targetRequest.method : 'POST',
+      url: typeof targetRequest?.url === 'string' ? targetRequest.url : scriptUrl,
+    },
+    page: captureSnapshot?.page ?? {},
+  };
 
   const fixtures = {
     version: 1,
@@ -265,10 +328,10 @@ async function materializePureExtractionDrafts(taskId: string): Promise<void> {
     samples: [
       {
         caseId: 'fixture-001',
-        description: 'Auto-generated fixture skeleton. Replace with a browser-verified sample before claiming pure extraction complete.',
-        input: {},
-        runtimeContext: {},
-        expected: {},
+        description: 'Auto-generated fixture draft inferred from task artifacts. Replace or verify against a browser-verified sample before claiming pure extraction complete.',
+        input: inferredInput,
+        runtimeContext,
+        expected: inferredExpected,
       },
     ],
     derivedFrom: {
@@ -286,6 +349,7 @@ async function materializePureExtractionDrafts(taskId: string): Promise<void> {
 export const PURE_STAGE = 'PureExtraction';
 export const MAIN_FUNCTION = ${JSON.stringify(mainFunction)};
 export const SOURCE_SCRIPT_URL = ${JSON.stringify(scriptUrl)};
+export const FIXTURE_PATH = './fixtures.json';
 
 /**
  * understand_code result snapshot:
@@ -306,6 +370,17 @@ export function ${mainFunction}(input, runtimeContext = {}) {
 
 export const extractedClosure = ${JSON.stringify(extractedClosure)};
 export const deobfuscatedDraft = ${JSON.stringify(deobfuscatedCode)};
+
+export function runFixture(fixture) {
+  return ${mainFunction}(fixture.input ?? {}, fixture.runtimeContext ?? {});
+}
+
+if (import.meta.url === \`file://\${process.argv[1]}\`) {
+  const fixtureArg = process.argv[2];
+  const fixture = fixtureArg ? JSON.parse(fixtureArg) : {input: {}, runtimeContext: {}};
+  const result = runFixture(fixture);
+  console.log(JSON.stringify({ok: true, result}, null, 2));
+}
 `;
 
   await Promise.all([

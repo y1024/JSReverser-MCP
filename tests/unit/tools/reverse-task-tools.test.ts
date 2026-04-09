@@ -480,6 +480,18 @@ describe('reverse task tools', () => {
           },
         },
       }, makeResponse() as unknown as Parameters<typeof startReverseTaskTool.handler>[1], {} as Parameters<typeof startReverseTaskTool.handler>[2]);
+      const opened = await runtime.reverseTaskStore.openTask({
+        taskId: 'task-run-agent-001',
+        slug: 'run-agent-demo',
+        targetUrl: 'https://example.com/api/h5st',
+        goal: 'auto run h5st reverse agent',
+      });
+      await opened.appendLog('runtime-evidence', {
+        source: 'capture',
+        kind: 'sample',
+        requestUrl: 'https://example.com/api/h5st',
+        bodyPreview: '{"appid":"app-1","body":{"sku":"1001"},"functionId":"sign.test"}',
+      });
 
       const response = makeResponse();
       await runReverseAgentTool.handler({
@@ -537,6 +549,12 @@ describe('reverse task tools', () => {
       ) as Record<string, unknown>;
       assert.strictEqual(fixtures.stage, 'PureExtraction');
       assert.strictEqual(fixtures.mainFunction, 'genH5st');
+      assert.deepStrictEqual((fixtures.samples as Array<Record<string, unknown>>)[0].input, {
+        appid: 'app-1',
+        body: {sku: '1001'},
+        functionId: 'sign.test',
+      });
+      assert.strictEqual((((fixtures.samples as Array<Record<string, unknown>>)[0].runtimeContext as Record<string, unknown>).request as Record<string, unknown>).url, 'https://example.com/api/h5st');
 
       const pureMain = await readFile(
         path.join(rootDir, 'task-run-agent-001', 'run', 'pure-main.js'),
@@ -544,6 +562,7 @@ describe('reverse task tools', () => {
       );
       assert.ok(pureMain.includes('export function genH5st'));
       assert.ok(pureMain.includes('deobfuscatedDraft'));
+      assert.ok(pureMain.includes('export function runFixture'));
 
       const evidence = (
         await readFile(path.join(rootDir, 'task-run-agent-001', 'runtime-evidence.jsonl'), 'utf8')
