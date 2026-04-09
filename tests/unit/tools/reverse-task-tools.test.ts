@@ -779,12 +779,13 @@ describe('reverse task tools', () => {
       } as Parameters<typeof runReverseAgentTool.handler>[0], response as unknown as Parameters<typeof runReverseAgentTool.handler>[1], makeAgentContext() as unknown as Parameters<typeof runReverseAgentTool.handler>[2]);
 
       const payload = extractFirstJsonBlock(response.lines) as {
-        run?: {stopReason?: string; goalMode?: string};
+        run?: {stopReason?: string; goalMode?: string; autoExportPortable?: boolean};
         nextBestTool?: string;
         continuation?: {invoke?: {tool?: string; params?: Record<string, unknown>}};
       };
       assert.strictEqual(payload.run?.stopReason, 'pure_extraction_ready');
       assert.strictEqual(payload.run?.goalMode, 'port-ready');
+      assert.strictEqual(payload.run?.autoExportPortable, false);
       assert.strictEqual(payload.nextBestTool, 'export_portable_bundle');
       assert.strictEqual(payload.continuation?.invoke?.tool, 'export_portable_bundle');
       assert.deepStrictEqual(payload.continuation?.invoke?.params, {
@@ -812,6 +813,115 @@ describe('reverse task tools', () => {
       assert.ok(pureMain.includes("outputShape: 'signature-result-v1'") || pureMain.includes('"outputShape": "signature-result-v1"'));
       assert.ok(pureMain.includes('inputAdapterApplied'));
       assert.ok(pureMain.includes('fixtureId'));
+    } finally {
+      runtime.reverseTaskStore = originals.reverseTaskStore;
+      runtime.collector.collect = originals.collectorCollect;
+      runtime.collector.getTopPriorityFiles = originals.collectorGetTopPriorityFiles;
+      runtime.analyzer.understand = originals.analyzerUnderstand;
+      runtime.deobfuscator.deobfuscate = originals.deobfuscatorDeobfuscate;
+      await rm(rootDir, {recursive: true, force: true});
+    }
+  });
+
+  it('auto-exports portable pure bundle after port-ready when enabled', async () => {
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'jsreverser-mcp-task-run-agent-port-auto-'));
+    const runtime = getJSHookRuntime();
+    const originals = {
+      reverseTaskStore: runtime.reverseTaskStore,
+      collectorCollect: runtime.collector.collect,
+      collectorGetTopPriorityFiles: runtime.collector.getTopPriorityFiles,
+      analyzerUnderstand: runtime.analyzer.understand,
+      deobfuscatorDeobfuscate: runtime.deobfuscator.deobfuscate,
+    };
+
+    runtime.reverseTaskStore = new ReverseTaskStore({rootDir});
+    runtime.collector.collect = async (): Promise<CollectCodeResult> => ({
+      files: [{url: 'app.js', content: 'function sign(){return 1}', size: 32, type: 'external'}],
+      dependencies: {nodes: [], edges: []},
+      totalSize: 32,
+      collectTime: 1,
+    });
+    runtime.collector.getTopPriorityFiles = () => ({
+      files: [{
+        url: 'https://example.com/app.js',
+        content: 'function genH5st(appid, body, functionId) { return hash(body); } fetch("/api/h5st", {method: "POST"})',
+        size: 104,
+        type: 'external',
+      }],
+      totalSize: 104,
+      totalFiles: 1,
+    });
+    runtime.analyzer.understand = async (): Promise<UnderstandCodeResult> => ({
+      structure: {functions: [], classes: [], modules: [], callGraph: {nodes: [], edges: []}},
+      techStack: {other: []},
+      businessLogic: {mainFeatures: ['build h5st'], entities: [], rules: [], dataModel: {}},
+      dataFlow: {graph: {nodes: [], edges: []}, sources: [], sinks: [], taintPaths: []},
+      securityRisks: [],
+      qualityScore: 90,
+    });
+    runtime.deobfuscator.deobfuscate = async (): Promise<DeobfuscateResult> => ({
+      code: 'function genH5st(input){return input}',
+      readabilityScore: 90,
+      confidence: 0.9,
+      obfuscationType: ['webpack'],
+      transformations: [],
+      analysis: 'port ready auto export draft',
+    });
+
+    try {
+      await startReverseTaskTool.handler({
+        params: {
+          taskId: 'task-run-agent-port-auto-001',
+          taskSlug: 'run-agent-port-auto-demo',
+          targetUrl: 'https://example.com/api/h5st',
+          goal: 'port ready auto export flow',
+          targetContext: {
+            targetRequest: {
+              method: 'POST',
+              url: 'https://example.com/api/h5st',
+            },
+          },
+        },
+      }, makeResponse() as unknown as Parameters<typeof startReverseTaskTool.handler>[1], {} as Parameters<typeof startReverseTaskTool.handler>[2]);
+
+      const opened = await runtime.reverseTaskStore.openTask({
+        taskId: 'task-run-agent-port-auto-001',
+        slug: 'run-agent-port-auto-demo',
+        targetUrl: 'https://example.com/api/h5st',
+        goal: 'port ready auto export flow',
+      });
+      await opened.appendLog('runtime-evidence', {
+        source: 'capture',
+        kind: 'sample',
+        requestUrl: 'https://example.com/api/h5st',
+        bodyPreview: '{"appid":"app-1","body":{"sku":"1001"},"functionId":"sign.test"}',
+      });
+
+      const response = makeResponse();
+      await runReverseAgentTool.handler({
+        params: {
+          taskId: 'task-run-agent-port-auto-001',
+          maxRounds: 6,
+          goalMode: 'port-ready',
+          autoExportPortable: true,
+        },
+      } as Parameters<typeof runReverseAgentTool.handler>[0], response as unknown as Parameters<typeof runReverseAgentTool.handler>[1], makeAgentContext() as unknown as Parameters<typeof runReverseAgentTool.handler>[2]);
+
+      const payload = extractFirstJsonBlock(response.lines) as {
+        run?: {stopReason?: string; goalMode?: string; autoExportPortable?: boolean};
+        generatedArtifacts?: string[];
+      };
+      assert.strictEqual(payload.run?.stopReason, 'pure_extraction_ready');
+      assert.strictEqual(payload.run?.goalMode, 'port-ready');
+      assert.strictEqual(payload.run?.autoExportPortable, true);
+      assert.ok((payload.generatedArtifacts ?? []).includes('run/portable.js'));
+
+      const portable = await readFile(
+        path.join(rootDir, 'task-run-agent-port-auto-001', 'run', 'portable.js'),
+        'utf8',
+      );
+      assert.ok(portable.includes('runPortableFixture'));
+      assert.ok(portable.includes('PORTABLE_FIXTURES'));
     } finally {
       runtime.reverseTaskStore = originals.reverseTaskStore;
       runtime.collector.collect = originals.collectorCollect;

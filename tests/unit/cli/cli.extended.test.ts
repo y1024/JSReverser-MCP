@@ -29,6 +29,7 @@ interface ParsedArgsLike {
   exportPortableBundle?: string;
   maxRounds?: number;
   goalMode?: string;
+  autoExportPortable?: boolean;
   artifactMode?: string;
   execute?: boolean;
   resume?: boolean;
@@ -212,6 +213,7 @@ describe('cli extended coverage', () => {
       '4',
       '--goalMode',
       'port-ready',
+      '--autoExportPortable',
       '--strategy',
       'evidence-only',
       '--outputMode',
@@ -222,6 +224,7 @@ describe('cli extended coverage', () => {
     assert.strictEqual(parsed.runReverseAgent, 'task-77');
     assert.strictEqual(parsed.maxRounds, 4);
     assert.strictEqual(parsed.goalMode, 'port-ready');
+    assert.strictEqual(parsed.autoExportPortable, true);
     assert.strictEqual(parsed.strategy, 'evidence-only');
     assert.strictEqual(parsed.outputMode, 'compact');
     assert.strictEqual(parsed.includeSummary, false);

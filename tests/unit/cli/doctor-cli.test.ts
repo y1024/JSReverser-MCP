@@ -534,23 +534,32 @@ describe('doctor cli', () => {
         runReverseAgent: 'task-cli-run-agent-001',
         maxRounds: 2,
         goalMode: 'port-ready',
+        autoExportPortable: true,
         outputMode: 'compact',
         includeSummary: false,
       }, (line) => lines.push(line));
       assert.strictEqual(handled, true);
       const payload = JSON.parse(lines[0]) as {
-        run?: {stopReason?: string; goalMode?: string};
+        run?: {stopReason?: string; goalMode?: string; autoExportPortable?: boolean};
         outputMode?: string;
+        generatedArtifacts?: string[];
       };
       assert.strictEqual(payload.run?.stopReason, 'pure_extraction_ready');
       assert.strictEqual(payload.run?.goalMode, 'port-ready');
+      assert.strictEqual(payload.run?.autoExportPortable, true);
       assert.strictEqual(payload.outputMode, 'compact');
+      assert.ok((payload.generatedArtifacts ?? []).includes('run/portable.js'));
 
       const pureMain = await readFile(
         path.join(rootDir, 'task-cli-run-agent-001', 'run', 'pure-main.js'),
         'utf8',
       );
       assert.ok(pureMain.includes('PORT_CONTRACT'));
+      const portable = await readFile(
+        path.join(rootDir, 'task-cli-run-agent-001', 'run', 'portable.js'),
+        'utf8',
+      );
+      assert.ok(portable.includes('runPortableFixture'));
     } finally {
       runtime.analyzer.understand = originals.analyzerUnderstand;
       runtime.deobfuscator.deobfuscate = originals.deobfuscatorDeobfuscate;

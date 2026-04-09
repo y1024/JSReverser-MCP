@@ -17,6 +17,7 @@ import {zod} from '../third_party/index.js';
 import {deobfuscateCode, locateSignatureFunction, understandCode} from './analyzer.js';
 import {ToolCategory} from './categories.js';
 import {extractFunctionTree, searchInSources} from './debugger.js';
+import {exportPortableBundle} from './rebuild.js';
 import {manageReverseTaskTool} from './task-manager.js';
 import {buildOrchestrationContinuation, compactAgentPayload, withSchemaVersion} from './response-builder.js';
 import {defineTool} from './ToolDefinition.js';
@@ -501,6 +502,7 @@ export const runReverseAgentTool = defineTool({
     maxRounds: zod.number().int().positive().max(20).optional().default(6),
     strategy: zod.enum(['observe-first', 'rebuild-first', 'env-fix', 'artifact-sync', 'evidence-only']).optional(),
     goalMode: zod.enum(['signature-only', 'pure-draft', 'port-ready']).optional().default('pure-draft'),
+    autoExportPortable: zod.boolean().optional().default(false),
     outputMode: zod.enum(['compact', 'verbose']).optional().default('verbose'),
     includeSummary: zod.boolean().optional().default(true),
   },
@@ -637,6 +639,19 @@ export const runReverseAgentTool = defineTool({
       timelineLimit: 20,
       evidenceLimit: 20,
     });
+    if (
+      request.params.autoExportPortable === true &&
+      goalMode === 'port-ready' &&
+      stopReason === 'pure_extraction_ready'
+    ) {
+      const exportResponse = makeToolResponse();
+      await exportPortableBundle.handler({
+        params: {
+          taskId: request.params.taskId,
+          artifactMode: 'pure',
+        },
+      } as Parameters<typeof exportPortableBundle.handler>[0], exportResponse as unknown as Parameters<typeof exportPortableBundle.handler>[1], {} as Parameters<typeof exportPortableBundle.handler>[2]);
+    }
     const generatedArtifacts = await listExistingArtifacts(
       request.params.taskId,
       goalMode === 'signature-only'
@@ -648,6 +663,7 @@ export const runReverseAgentTool = defineTool({
           'run/fixtures.json',
           'run/pure-main.js',
           'run/pure-selftest.test.mjs',
+          'run/portable.js',
         ],
     );
     const agentGuidance = buildRunReverseAgentHints({
@@ -669,6 +685,7 @@ export const runReverseAgentTool = defineTool({
         roundsExecuted: rounds.length,
         stopReason,
         goalMode,
+        autoExportPortable: request.params.autoExportPortable === true,
       },
       ...buildOrchestrationContinuation({
         shouldResume: stopReason === 'checkpoint_required',
@@ -684,6 +701,7 @@ export const runReverseAgentTool = defineTool({
         maxRounds: request.params.maxRounds ?? 6,
         stopReason,
         goalMode,
+        autoExportPortable: request.params.autoExportPortable === true,
         rounds,
       },
       currentStage: String(finalState.state?.currentStage ?? lastResult.currentStage),

@@ -97,6 +97,7 @@ node build/src/index.js --doctor
   - `goalMode=signature-only`：只推进到 `function-slice.json`
   - `goalMode=pure-draft`：默认，生成 PureExtraction 草稿
   - `goalMode=port-ready`：生成更适合 port 的返回契约草稿
+  - `autoExportPortable=true`：配合 `goalMode=port-ready` 时，完成后直接自动导出 `run/portable.js`
 - 如果你暂时不想走 MCP，也可以直接用统一 CLI：
   - `jsreverser-mcp --manageReverseTask list`
   - `jsreverser-mcp --manageReverseTask get --taskId <taskId>`
@@ -113,6 +114,7 @@ node build/src/index.js --doctor
   - `jsreverser-mcp --runReverseAgent <taskId> --goalMode signature-only`
   - `jsreverser-mcp --runReverseAgent <taskId> --maxRounds 4 --outputMode compact`
   - `jsreverser-mcp --runReverseAgent <taskId> --goalMode port-ready --outputMode compact`
+  - `jsreverser-mcp --runReverseAgent <taskId> --goalMode port-ready --autoExportPortable`
 - `run_reverse_agent` 进入 `PureExtraction` 后，会自动落：
   - `run/fixtures.json`
   - `run/pure-main.js`

@@ -162,6 +162,7 @@
     - `signature-only`：停在最小函数切片，适合先只拿 `function-slice.json`
     - `pure-draft`：默认模式，进入 `PureExtraction` 并自动落 `run/fixtures.json`、`run/pure-main.js`、`run/pure-selftest.test.mjs`
     - `port-ready`：和 `pure-draft` 一样生成草稿，但会额外固化 `PORT_CONTRACT`、adapter boundary、`fixtureId` 等 port 侧约束，方便后续跨 runtime port
+  - `autoExportPortable: true`：当 `goalMode=port-ready` 且到达 `PureExtraction` 时，自动再导出 `run/portable.js`
   - 当 `goalMode=port-ready` 并进入 `PureExtraction` 后，agent 会优先建议继续执行 `export_portable_bundle --artifactMode pure`
   - 返回里会补 `generatedArtifacts`，方便外部 agent / client 直接读取本轮新生成的 task-local 文件
 - `export_portable_bundle`：把现有分析态 artifacts 收敛成便携交付文件
@@ -189,6 +190,7 @@
   - `--runReverseAgent <taskId> --goalMode signature-only`
   - `--runReverseAgent <taskId> --maxRounds 4 --outputMode compact`
   - `--runReverseAgent <taskId> --goalMode port-ready --outputMode compact`
+  - `--runReverseAgent <taskId> --goalMode port-ready --autoExportPortable`
   - `--exportPortableBundle <taskId>`
   - `--exportPortableBundle <taskId> --artifactMode pure`
 - 自动化编排的 checkpoint、CLI cheatsheet、失败分类对照表、`codex --resume` 协同方式见 [docs/guides/reverse-task-orchestration.md](docs/guides/reverse-task-orchestration.md)
