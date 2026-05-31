@@ -35,6 +35,12 @@ export interface DetailedDataResponse {
   expiresAt: number;
 }
 
+export interface DetailedDataPage {
+  items: unknown[];
+  nextCursor?: number;
+  total: number;
+}
+
 interface CacheEntry {
   data: any;
   expiresAt: number;
@@ -179,6 +185,29 @@ export class DetailedDataManager {
 
     // 返回完整数据
     return cached.data;
+  }
+
+  retrievePage(
+    detailId: string,
+    options: {path?: string; cursor?: number; limit?: number} = {},
+  ): DetailedDataPage {
+    const value = this.retrieve(detailId, options.path);
+    const cursor = Math.max(0, options.cursor ?? 0);
+    const limit = Math.max(1, options.limit ?? 50);
+    const items = Array.isArray(value)
+      ? value
+      : typeof value === 'object' && value !== null
+        ? Object.entries(value)
+        : [value];
+    const page = items.slice(cursor, cursor + limit);
+    const nextCursor =
+      cursor + page.length < items.length ? cursor + page.length : undefined;
+
+    return {
+      items: page,
+      ...(nextCursor !== undefined ? {nextCursor} : {}),
+      total: items.length,
+    };
   }
 
   /**

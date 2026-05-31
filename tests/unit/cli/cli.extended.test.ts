@@ -113,6 +113,10 @@ describe('cli extended coverage', () => {
 
   it('parseArguments applies stable channel default when launch target is absent', () => {
     const args = parseArguments('1.2.3', ['node', 'cli.js']) as ParsedArgsLike;
+    assert.strictEqual(
+      (args as ParsedArgsLike & {$0?: string}).$0,
+      'node build/src/index.js',
+    );
     assert.strictEqual(args.doctor, false);
     assert.strictEqual(args.channel, 'stable');
     assert.strictEqual(args.headless, false);

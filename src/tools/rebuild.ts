@@ -51,6 +51,7 @@ async function persistCompactDeliveryStatus(args: {
   taskId: string;
   taskDir: string;
   generatedFiles: string[];
+  verification?: PortableBundleVerification;
 }): Promise<void> {
   if (args.generatedFiles.length === 0) {
     return;
@@ -101,8 +102,57 @@ async function persistCompactDeliveryStatus(args: {
     source: 'export_portable_bundle',
     kind: 'compact-delivery',
     files: args.generatedFiles,
+    verification: args.verification,
     note: summary,
   });
+  if (args.verification?.ok) {
+    await task.appendTimeline({
+      stage: currentStage.toLowerCase(),
+      action: 'compact_delivery_verified',
+      status: 'ok',
+      result: args.verification.verifiedFiles.join(', '),
+      next: 'manage_reverse_task:summarize',
+    });
+  }
+}
+
+interface PortableBundleVerification {
+  checked: boolean;
+  ok: boolean;
+  verifiedFiles: string[];
+  errors: string[];
+}
+
+async function verifyPortableBundleFiles(
+  taskDir: string,
+  generatedFiles: string[],
+): Promise<PortableBundleVerification> {
+  const verifiedFiles: string[] = [];
+  const errors: string[] = [];
+  for (const file of generatedFiles) {
+    try {
+      const content = await readFile(path.join(taskDir, file), 'utf8');
+      if (!content.trim()) {
+        errors.push(`${file}: empty file`);
+        continue;
+      }
+      if (!content.includes('export ')) {
+        errors.push(`${file}: missing export`);
+        continue;
+      }
+      verifiedFiles.push(file);
+    } catch (error) {
+      errors.push(
+        `${file}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+  return {
+    checked: true,
+    ok: errors.length === 0,
+    verifiedFiles,
+    errors,
+  };
 }
 
 async function artifactExists(
@@ -695,6 +745,11 @@ export const exportPortableBundle = defineTool({
       }
     }
 
+    const verification = await verifyPortableBundleFiles(
+      task.taskDir,
+      generatedFiles,
+    );
+
     response.appendResponseLine('```json');
     response.appendResponseLine(
       JSON.stringify(
@@ -705,6 +760,7 @@ export const exportPortableBundle = defineTool({
           artifactMode: request.params.artifactMode ?? 'portable',
           generatedFiles,
           compactDelivery: generatedFiles.length > 0,
+          verification,
         },
         null,
         2,
@@ -716,6 +772,7 @@ export const exportPortableBundle = defineTool({
       taskId: task.taskId,
       taskDir: task.taskDir,
       generatedFiles,
+      verification,
     });
   },
 });

@@ -47,6 +47,7 @@ describe('ReverseTaskAutoProgress', () => {
       assert.strictEqual(result.nextStepHint, 'export_rebuild_bundle');
       assert.ok(Array.isArray(result.reasoning));
       assert.strictEqual(result.signals.hasHookEvidence, true);
+      assert.ok(result.signals.stageConfidence >= 0.7);
       void task;
     } finally {
       await rm(rootDir, {recursive: true, force: true});
@@ -75,6 +76,7 @@ describe('ReverseTaskAutoProgress', () => {
       assert.strictEqual(result.currentStage, 'Port');
       assert.strictEqual(result.status, 'pass');
       assert.strictEqual(result.nextStepHint, 'manage_reverse_task:summarize');
+      assert.strictEqual(result.signals.stageConfidence, 1);
       assert.ok(result.reasoning.some(item => item.includes('Port')));
     } finally {
       await rm(rootDir, {recursive: true, force: true});

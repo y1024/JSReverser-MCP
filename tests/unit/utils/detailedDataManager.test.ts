@@ -24,6 +24,10 @@ interface SmartHandledResult {
 interface FullDetailedDataManager {
   store(data: unknown, ttlMs?: number): string;
   retrieve(detailId: string, path?: string): unknown;
+  retrievePage(
+    detailId: string,
+    options: {path?: string; cursor?: number; limit?: number},
+  ): {items: unknown[]; nextCursor?: number; total: number};
   getStats(): {
     cacheSize: number;
     totalSizeKB: string;
@@ -139,5 +143,38 @@ describe('DetailedDataManager', () => {
 
     manager.clear();
     assert.strictEqual(manager.getStats().cacheSize, 0);
+  });
+
+  it('returns paged slices for large arrays and object entries', () => {
+    const manager =
+      DetailedDataManager.getInstance() as unknown as FullDetailedDataManager;
+    const id = manager.store({
+      rows: ['a', 'b', 'c'],
+      lookup: {one: 1, two: 2},
+    });
+
+    const firstPage = manager.retrievePage(id, {
+      path: 'rows',
+      limit: 2,
+    });
+    assert.deepStrictEqual(firstPage, {
+      items: ['a', 'b'],
+      nextCursor: 2,
+      total: 3,
+    });
+
+    const secondPage = manager.retrievePage(id, {
+      path: 'rows',
+      cursor: firstPage.nextCursor,
+      limit: 2,
+    });
+    assert.deepStrictEqual(secondPage, {
+      items: ['c'],
+      total: 3,
+    });
+
+    const objectPage = manager.retrievePage(id, {path: 'lookup', limit: 1});
+    assert.deepStrictEqual(objectPage.items, [['one', 1]]);
+    assert.strictEqual(objectPage.nextCursor, 1);
   });
 });

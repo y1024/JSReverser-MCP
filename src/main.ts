@@ -49,7 +49,10 @@ import * as taskManagerTools from './tools/task-manager.js';
 import * as taskTools from './tools/task.js';
 import type {ToolDefinition} from './tools/ToolDefinition.js';
 import {ToolRegistry} from './tools/ToolRegistry.js';
-import {withOptionalTraceIdContent} from './tools/trace-output.js';
+import {
+  resolveTraceOutputMode,
+  withOptionalTraceIdContent,
+} from './tools/trace-output.js';
 import * as websocketTools from './tools/websocket.js';
 import * as workflowTools from './tools/workflows.js';
 import {ErrorCodes, formatError} from './utils/errors.js';
@@ -192,7 +195,10 @@ function registerTool(tool: ToolDefinition): void {
             const wrapped = withOptionalTraceIdContent(
               content,
               traceId,
-              args.traceOutput,
+              resolveTraceOutputMode(
+                args.traceOutput,
+                (params as Record<string, unknown>).traceOutput,
+              ),
             );
             tokenBudgetManager.recordToolCall(tool.name, params, content);
             logToolEvent(traceId, tool.name, 'success', {

@@ -6,6 +6,18 @@
 
 import type {CallToolResult} from '../third_party/index.js';
 
+export type TraceOutputMode = 'errors' | 'all';
+
+export function resolveTraceOutputMode(
+  globalMode: string | undefined,
+  requestMode: unknown,
+): TraceOutputMode {
+  if (requestMode === 'all' || requestMode === 'errors') {
+    return requestMode;
+  }
+  return globalMode === 'all' ? 'all' : 'errors';
+}
+
 export function withOptionalTraceIdContent(
   content: CallToolResult['content'],
   traceId: string,

@@ -119,7 +119,7 @@ describe('BrowserModeManager extended', () => {
     }) as typeof puppeteer.connect;
     await assert.rejects(async () => {
       await (manager as unknown as BrowserManagerHarness).waitForBrowser(30);
-    }, /Browser failed to start within timeout/);
+    }, /Browser failed to start within 30ms at http:\/\/127\.0\.0\.1:9222.*down/);
   });
 
   it('launch handles direct connect, autoLaunch fallback, and no-autoLaunch failure', async () => {

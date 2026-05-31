@@ -26,6 +26,7 @@ interface AutoProgressSignals {
   serverAcceptance: string;
   localRebuild: string;
   firstDivergenceKnown: boolean;
+  stageConfidence: number;
   explicitStage?: string;
 }
 
@@ -89,6 +90,15 @@ function collectSignals(
         typeof entry.result === 'string' &&
         String(entry.result).toLowerCase().includes('divergence'),
     );
+  const stageConfidence = calculateStageConfidence({
+    hasTargetRequest,
+    hasHookEvidence: hookRecordCount > 0,
+    hasRebuildBundle,
+    hasPassingRebuild,
+    browserAlignment,
+    serverAcceptance,
+    firstDivergenceKnown,
+  });
 
   return {
     hasTargetRequest,
@@ -103,8 +113,36 @@ function collectSignals(
     serverAcceptance,
     localRebuild,
     firstDivergenceKnown,
+    stageConfidence,
     ...(explicitStage ? {explicitStage} : {}),
   };
+}
+
+function calculateStageConfidence(signals: {
+  hasTargetRequest: boolean;
+  hasHookEvidence: boolean;
+  hasRebuildBundle: boolean;
+  hasPassingRebuild: boolean;
+  browserAlignment: string;
+  serverAcceptance: string;
+  firstDivergenceKnown: boolean;
+}): number {
+  if (
+    signals.hasPassingRebuild &&
+    signals.browserAlignment === 'pass' &&
+    signals.serverAcceptance === 'pass'
+  ) {
+    return 1;
+  }
+  let score = 0.35;
+  if (signals.hasTargetRequest) score += 0.15;
+  if (signals.hasHookEvidence) score += 0.2;
+  if (signals.hasRebuildBundle) score += 0.15;
+  if (signals.firstDivergenceKnown) score += 0.05;
+  if (signals.hasPassingRebuild) score += 0.1;
+  if (signals.browserAlignment === 'pass') score += 0.1;
+  if (signals.serverAcceptance === 'pass') score += 0.1;
+  return Math.min(1, Number(score.toFixed(2)));
 }
 
 function inferCurrentStage(

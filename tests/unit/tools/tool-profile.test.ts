@@ -10,6 +10,7 @@ import {describe, it} from 'node:test';
 import {ToolCategory} from '../../../src/tools/categories.js';
 import {
   COMPACT_TOOL_NAMES,
+  describeToolProfileSelection,
   selectToolsForProfile,
 } from '../../../src/tools/profile.js';
 import type {ToolDefinition} from '../../../src/tools/ToolDefinition.js';
@@ -66,5 +67,24 @@ describe('tool profile selection', () => {
     for (const name of ['pause', 'step_over', 'step_into', 'step_out']) {
       assert.strictEqual(COMPACT_TOOL_NAMES.has(name), false);
     }
+  });
+
+  it('describes hidden tools for compact profile discoverability', () => {
+    const summary = describeToolProfileSelection(
+      [
+        tool('run_reverse_agent'),
+        tool('pause'),
+        tool('step_over'),
+        tool('network_request'),
+      ],
+      'compact',
+    );
+
+    assert.deepStrictEqual(summary.selectedToolNames, [
+      'run_reverse_agent',
+      'network_request',
+    ]);
+    assert.deepStrictEqual(summary.hiddenToolNames, ['pause', 'step_over']);
+    assert.match(summary.hint, /toolProfile=full/);
   });
 });

@@ -59,3 +59,33 @@ export function selectToolsForProfile(
 
   return tools.filter(tool => COMPACT_TOOL_NAMES.has(tool.name));
 }
+
+export function describeToolProfileSelection(
+  tools: ToolDefinition[],
+  profile: ToolProfile = 'compact',
+): {
+  profile: ToolProfile;
+  selectedToolNames: string[];
+  hiddenToolNames: string[];
+  hint: string;
+} {
+  const selected = selectToolsForProfile(tools, profile).map(tool => tool.name);
+  const selectedSet = new Set(selected);
+  const hidden =
+    profile === 'full'
+      ? []
+      : tools
+          .map(tool => tool.name)
+          .filter(name => !selectedSet.has(name))
+          .sort();
+
+  return {
+    profile,
+    selectedToolNames: selected,
+    hiddenToolNames: hidden,
+    hint:
+      hidden.length > 0
+        ? `Compact profile hid ${hidden.length} tools. Restart with --toolProfile full or set toolProfile=full when you need low-level debugging controls.`
+        : 'All registered tools are available in this profile.',
+  };
+}

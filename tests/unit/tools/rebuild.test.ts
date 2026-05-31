@@ -978,6 +978,12 @@ describe('rebuild bridge tools', () => {
         (payload.generatedFiles as string[]).includes('run/portable.js'),
       );
       assert.ok((payload.generatedFiles as string[]).includes('env/replay.js'));
+      assert.deepStrictEqual(payload.verification, {
+        checked: true,
+        ok: true,
+        verifiedFiles: ['run/portable.js', 'env/replay.js'],
+        errors: [],
+      });
 
       const portable = await readFile(
         path.join(rootDir, 'task-portable-001', 'run', 'portable.js'),
@@ -1017,6 +1023,9 @@ describe('rebuild bridge tools', () => {
       assert.ok(String(state.currentSummary).includes('env/replay.js'));
       assert.ok(
         timeline.some(entry => entry.action === 'compact_delivery_ready'),
+      );
+      assert.ok(
+        timeline.some(entry => entry.action === 'compact_delivery_verified'),
       );
     } finally {
       runtime.reverseTaskStore = originalStore;

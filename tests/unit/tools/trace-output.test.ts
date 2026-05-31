@@ -7,7 +7,10 @@
 import assert from 'node:assert';
 import {describe, it} from 'node:test';
 
-import {withOptionalTraceIdContent} from '../../../src/tools/trace-output.js';
+import {
+  resolveTraceOutputMode,
+  withOptionalTraceIdContent,
+} from '../../../src/tools/trace-output.js';
 
 describe('trace output formatting', () => {
   it('omits trace metadata from successful compact responses by default', () => {
@@ -31,5 +34,12 @@ describe('trace output formatting', () => {
       traceId: 'trace_1',
     });
     assert.strictEqual(responseText, 'ok');
+  });
+
+  it('allows a single tool call to override global trace output mode', () => {
+    assert.strictEqual(resolveTraceOutputMode('errors', 'all'), 'all');
+    assert.strictEqual(resolveTraceOutputMode('all', 'errors'), 'errors');
+    assert.strictEqual(resolveTraceOutputMode('errors', undefined), 'errors');
+    assert.strictEqual(resolveTraceOutputMode('errors', 'invalid'), 'errors');
   });
 });

@@ -263,4 +263,28 @@ describe('Code cache and compressor', () => {
       await rm(dir, {force: true});
     }
   });
+
+  it('normalizes cache option key order and supports explicit cache epochs', () => {
+    const cache = new CodeCache();
+    const mutableCache = cache as unknown as MutableCodeCache;
+
+    assert.strictEqual(
+      mutableCache.generateKey('https://example.com/app.js', {
+        mode: 'summary',
+        filters: {b: 2, a: 1},
+      }),
+      mutableCache.generateKey('https://example.com/app.js', {
+        filters: {a: 1, b: 2},
+        mode: 'summary',
+      }),
+    );
+    assert.notStrictEqual(
+      mutableCache.generateKey('https://example.com/app.js', {
+        cacheEpoch: 'before-navigation',
+      }),
+      mutableCache.generateKey('https://example.com/app.js', {
+        cacheEpoch: 'after-navigation',
+      }),
+    );
+  });
 });

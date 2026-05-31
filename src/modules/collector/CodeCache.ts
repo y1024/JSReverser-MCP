@@ -15,6 +15,19 @@ import type {CodeFile, CollectCodeResult} from '../../types/index.js';
 import {logger} from '../../utils/logger.js';
 import {resolveDefaultCodeCacheDir} from '../../utils/projectPaths.js';
 
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(item => stableStringify(item)).join(',')}]`;
+  }
+  if (value && typeof value === 'object') {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
+      .join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
 export interface CacheEntry {
   url: string;
   files: CodeFile[];
@@ -66,7 +79,7 @@ export class CodeCache {
    * 生成缓存键
    */
   private generateKey(url: string, options?: Record<string, unknown>): string {
-    const data = JSON.stringify({url, options});
+    const data = stableStringify({url, options});
     return crypto.createHash('md5').update(data).digest('hex');
   }
 

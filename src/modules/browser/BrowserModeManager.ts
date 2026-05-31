@@ -112,6 +112,7 @@ export class BrowserModeManager {
    */
   private async waitForBrowser(timeout: number): Promise<void> {
     const startTime = Date.now();
+    let lastError = '';
     while (Date.now() - startTime < timeout) {
       try {
         await puppeteer
@@ -120,13 +121,16 @@ export class BrowserModeManager {
           })
           .then(browser => browser.disconnect());
         return;
-      } catch {
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
         await new Promise(resolve =>
           setTimeout(resolve, this.config.waitForBrowserPollMs),
         );
       }
     }
-    throw new Error('Browser failed to start within timeout');
+    throw new Error(
+      `Browser failed to start within ${timeout}ms at ${this.config.remoteDebuggingUrl}. Last connection error: ${lastError || 'unknown'}`,
+    );
   }
 
   /**
