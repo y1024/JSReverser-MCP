@@ -307,11 +307,11 @@ See:
 ## Tool Exposure Modes
 
 The default startup mode is `--toolProfile compact`.
-This mode exposes 47 high-frequency tools to reduce MCP tool-list token usage.
+This mode exposes 63 high-frequency tools to reduce MCP tool-list token usage.
 It does not mean tools are missing; low-frequency manual debugging tools are hidden by default.
 
 Use `--toolProfile full` when you need the complete tool set.
-`full` exposes all 94 tools, including pause, stepping, breakpoints, WebSocket details, and fine-grained DOM controls.
+`full` exposes all 110 tools, including pause, stepping, breakpoints, WebSocket details, and fine-grained DOM controls.
 Switch to `full` for deep manual debugging, precise breakpoint work, or WebSocket message inspection.
 
 ```bash

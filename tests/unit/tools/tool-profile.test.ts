@@ -58,6 +58,9 @@ describe('tool profile selection', () => {
       'run_reverse_agent',
       'get_reference_route',
       'export_portable_bundle',
+      'repair_browser_connection',
+      'trace_request_to_code',
+      'export_diagnostic_bundle',
     ]) {
       assert.ok(COMPACT_TOOL_NAMES.has(name), `${name} should be compact`);
     }

@@ -372,11 +372,11 @@ GEMINI_CLI_PATH=gemini-cli
 ## 工具暴露模式
 
 默认启动使用 `--toolProfile compact`。
-该模式只暴露 47 个高频工具，用来减少 MCP tool list 占用的 token。
+该模式只暴露 63 个高频工具，用来减少 MCP tool list 占用的 token。
 这不是缺工具，而是默认把低频手工调试工具隐藏起来。
 
 需要全量工具时，使用 `--toolProfile full`。
-`full` 会暴露全部 94 个工具，包括暂停、单步、断点、WebSocket 细节和 DOM 细调工具。
+`full` 会暴露全部 110 个工具，包括暂停、单步、断点、WebSocket 细节和 DOM 细调工具。
 深度人工调试、精确断点排查、WebSocket 消息深挖时再切换到 `full`。
 
 ```bash

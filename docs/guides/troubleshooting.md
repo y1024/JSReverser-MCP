@@ -15,7 +15,7 @@
 
 这不是正常状态，会影响后续调用。
 
-`--toolProfile compact` 只会减少工具数量，不会让工具变成 none。默认 compact 应暴露 47 个高频工具；`--toolProfile full` 会暴露全部 94 个工具。
+`--toolProfile compact` 只会减少工具数量，不会让工具变成 none。默认 compact 应暴露 63 个高频工具；`--toolProfile full` 会暴露全部 110 个工具。
 
 常见原因：
 
